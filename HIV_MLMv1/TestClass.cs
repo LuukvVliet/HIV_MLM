@@ -10,7 +10,7 @@ namespace HIV_MLMv1
     class TestClass
     {
 
-        //Simulation parameters, with N being the starting size of the population.
+        /*//Simulation parameters, with N being the starting size of the population.
         public static double InfectProbability = 0.15;
         public static double DeathProbability = 0.02;
         public static double TCellCutoff = 0.05; // At what threshold does an individual not have enough T cells to live anymore?
@@ -44,6 +44,6 @@ namespace HIV_MLMv1
             SolveTest.ConvenienceSolve(VirusDynamics, 0, 0.001, 500);
             double i = Math.Pow(3, 2);
             i = i;
-        }
+        }*/
     }
 }
