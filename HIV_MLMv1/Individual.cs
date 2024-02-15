@@ -16,7 +16,7 @@ namespace HIV_MLMv1
         List<Tuple<double, double>> VirusDistribution { get; set; } // First variable is amount, second variable is beta.
         List<StateType> History { get; }
         List<List<double>> StateHistory;
-        public Individual(int tiem, int id, StateType Init) : this(tiem, id, Init, new List<Tuple<double, double>> { new Tuple<double, double>(1000, 0.001) })
+        public Individual(int tiem, int id, StateType Init) : this(tiem, id, Init, new List<Tuple<double, double>> { new Tuple<double, double>(1000, 0.0001) })
         {
             
         }
@@ -63,7 +63,7 @@ namespace HIV_MLMv1
             };
         }
         //Checks for both death and mutation.
-        public bool ComputedOnce(double tcellCutoff, double mr, Random rGen, int limit)
+        public bool ComputedOnce(double tcellCutoff, double mr, Random rGen, int limit, double jumplimit)
         {
             //Checks to see if the individual still has enough T cells to continue living: returns true if not.
 
@@ -96,9 +96,10 @@ namespace HIV_MLMv1
                         break;
                     }
                 }
-                target += ((double)(rGen.Next(1, 100) - rGen.Next(1, 100))) / 10000;
+                target += ((double)(rGen.Next(1, 100) - rGen.Next(1, 100)))/100*jumplimit;
+                if (target < 0) target = 0;
                 VirusDistribution.Add(new Tuple<double, double>(100, target)); // Adds new virus to virusdistribution
-                VirusDynamics.InitialConditions.Add(VirusDistribution.Last().Item1); //Adds the virus to the initial conditions
+                LS.Add(VirusDistribution.Last().Item1); //Adds the virus to the initial conditions
             }
             return false;
         }
