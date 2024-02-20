@@ -9,41 +9,37 @@ namespace HIV_MLMv1
 {
     class TestClass
     {
-
-        /*//Simulation parameters, with N being the starting size of the population.
-        public static double InfectProbability = 0.15;
-        public static double DeathProbability = 0.02;
-        public static double TCellCutoff = 0.05; // At what threshold does an individual not have enough T cells to live anymore?
-        public static int N = 5;
-        public static int time = 0;
-        public static int timeLimit = int.MaxValue; //timeLimit does (technically) count the timelimit, since the time starts on round 0.
-        public static StateType StartingInfected = new StateType { 1.0, 0.001, 0.1 };
+        
+        //Simulation parameters, with N being the starting size of the population.
         static void Main(string[] args)
         {
-            List<StateType> History = new List<StateType>();
-            List<double> xcoord = new List<double>();
-            List<double> ycoord = new List<double>();
+            int timelimit = 10000;
+            List<Tuple<double, double>> VirusDistribution = new List<Tuple<double, double>> {
+                //new Tuple<double, double>(500,0.0001),
+                new Tuple<double, double>(100,0.00011)
+                };
+            StateType StartingInfected = new StateType {100000, 10, 100 };
+            Individual test = new Individual(0, -1, StartingInfected, VirusDistribution);
             Solver SolveTest = new Solver();
-            LambdaOde VirusDynamics = new LambdaOde
+            
+            SolveTest.StepperCode = StepperTypeCode.RungeKutta4;
+
+            int t = 0;
+            Random x = new Random();
+            while(t < timelimit)
             {
-                InitialConditions = { 100, 10 }, // Currently arbitrary initial conditions
-                OdeObserver = (x, t) => { History.Add(x); xcoord.Add(x[0]); ycoord.Add(x[1]); },
-                OdeSystem = (x, dxdt, t) =>
-                {
+                SolveTest.Solve(test.VirusDynamics, 0, 0.001, 1);
 
-                    const double r = 1;
-                    const double h = 1000;
-                    const double d = 0.6;
-                    const double cat = 0.01;
-
-                    dxdt[0] = r * x[0] - r * (Math.Pow(x[0], 2)) / h - d * x[0] - cat * x[0] * x[1];
-                    dxdt[1] = cat * x[0] * x[1] - d * x[1];
-
+                if (test.ComputedOnce(50, 0.02, x, 0.0001, 1))
+                    break;
+                if (t % 100 == 0) { 
+                    int pause = 0; 
                 }
-            };
-            SolveTest.ConvenienceSolve(VirusDynamics, 0, 0.001, 500);
+                t++;   
+            }
+            
             double i = Math.Pow(3, 2);
             i = i;
-        }*/
+        }
     }
 }

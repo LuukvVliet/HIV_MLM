@@ -16,23 +16,22 @@ namespace HIV_MLMv1
         List<Tuple<double, double>> VirusDistribution { get; set; } // First variable is amount, second variable is beta.
         List<StateType> History { get; }
         List<List<double>> StateHistory;
-        public Individual(int tiem, int id, StateType Init) : this(tiem, id, Init, new List<Tuple<double, double>> { new Tuple<double, double>(1000, 0.0001) })
-        {
-            
-        }
+        List<List<Tuple<double, double>>> VirusHistory { get; }
         public Individual(int tiem, int id, StateType Init, List<Tuple<double, double>> VD) 
         {
             ID = id;
             externalTime = tiem;
             History = new List<StateType>();
-            StateHistory = new List<List<double>> { new List<double>(), new List<double>(), new List<double>(), new List<double>() };
+            StateHistory = new List<List<double>> { new List<double>(), new List<double>()};
+            VirusHistory = new List<List<Tuple<double, double>>>();
+
+
             VirusDistribution = VD;
 
             VirusDynamics = new LambdaOde
             {
-
                 InitialConditions = Init, // Currently arbitrary initial conditions
-                OdeObserver = (x, t) => { History.Add(x); StateHistory[0].Add(x[0]); StateHistory[1].Add(x[1]); StateHistory[2].Add(x[2]); },
+                OdeObserver = (x, t) => { History.Add(x); StateHistory[0].Add(x[0]); StateHistory[1].Add(x[1]); },
                 OdeSystem = (x, dxdt, t) =>
                 {
                     //Parameters currently taken from own R script (death rate from paper, replication too i believe. h1 determined)
@@ -41,9 +40,9 @@ namespace HIV_MLMv1
                     const double d2 = 0.01;
                     const double r = 0.111;
                     const double delta = 0.5;
-                    const double a = 0;
+                    const double a = 0.1;
                     const double h1 = 1.09901 * 1000000;
-                    const double h2 = 1000000;
+                    const double h2 = 100000;
                     double sum = 0;
                     double PerCapitaDeathToVirusTCells = 0;
 
@@ -63,26 +62,37 @@ namespace HIV_MLMv1
             };
         }
         //Checks for both death and mutation.
-        public bool ComputedOnce(double tcellCutoff, double mr, Random rGen, int limit, double jumplimit)
+        public bool ComputedOnce(double tcellCutoff, double mr, Random rGen, double jumplimit, double newVirusAmount)
+        {
+            return ComputedOnce(tcellCutoff, mr, rGen, 99999, jumplimit, newVirusAmount);
+        }
+        public bool ComputedOnce(double tcellCutoff, double mr, Random rGen, int VirusLimit, double jumplimit, double newVirusAmount)
         {
             //Checks to see if the individual still has enough T cells to continue living: returns true if not.
-
+            
             StateType LS = History.Last();
             if (LS[0] <= tcellCutoff)
                 return true;
             //Updates the VirusDistribution 
-            //If a viral strain has more than 10 infected cells, go to the next simulation
-            //VirusDynamics.InitialConditions = new StateType { LS[0], LS[1] };
-            for(int i = 2; i < LS.Count; i++)
+            //If a viral strain has more than 10% of the virus amount with which it usually infects, go to the next population.
+            List<Tuple<double, double>> tempVirusDistribution = new List<Tuple<double, double>>();
+            StateType NewLS = new StateType();
+            double cutoff = 0.1 * newVirusAmount;
+            for (int i = 0; i < LS.Count; i++)
             {
+                if (i < 2)
+                    NewLS.Add(LS[i]);
                 //Console.WriteLine(LS[i]);
-                if (LS[i] > 10)
+                else if (LS[i] > cutoff)
                 {
-                    VirusDistribution[i - 2] = new Tuple<double, double>(LS[i], VirusDistribution[i - 2].Item2);
-                }
+                    tempVirusDistribution.Add(new Tuple<double, double>(LS[i], VirusDistribution[i - 2].Item2));
+                    NewLS.Add(LS[i]);
+                }   
             }
+            VirusDistribution = tempVirusDistribution;
+            LS = NewLS;
             //Weighted mutation chance, 
-            if (VirusDistribution.Count < limit && rGen.NextDouble() <= mr)
+            if (VirusDistribution.Count < VirusLimit && rGen.NextDouble() <= mr)
             {
                 double sum = VirusDistribution.Sum(x => x.Item1);
                 double targetmutation = rGen.Next(0, (int)sum);
@@ -93,14 +103,19 @@ namespace HIV_MLMv1
                     else
                     {
                         target = VirusDistribution[i].Item2;
+                        //Remove virus which mutates, up to 'newVirusAmount'
+                        if (newVirusAmount - VirusDistribution[i].Item1 < 0)
+                            newVirusAmount = VirusDistribution[i].Item1;
+                        VirusDistribution[i] = new Tuple<double, double>(VirusDistribution[i].Item1 - newVirusAmount, VirusDistribution[i].Item2);
                         break;
                     }
                 }
                 target += ((double)(rGen.Next(1, 100) - rGen.Next(1, 100)))/100*jumplimit;
-                if (target < 0) target = 0;
-                VirusDistribution.Add(new Tuple<double, double>(100, target)); // Adds new virus to virusdistribution
+                if (target < 0) target = 0; //dont have a negative beta
+                VirusDistribution.Add(new Tuple<double, double>(newVirusAmount, target)); // Adds new virus to virusdistribution
                 LS.Add(VirusDistribution.Last().Item1); //Adds the virus to the initial conditions
             }
+            VirusHistory.Add(VirusDistribution);
             return false;
         }
         public double NewInfection(Random rGen)
