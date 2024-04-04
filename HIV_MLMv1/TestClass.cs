@@ -30,7 +30,7 @@ namespace HIV_MLMv1
             {
                 SolveTest.Solve(test.VirusDynamics, 0, 0.001, 1);
 
-                if (test.ComputedOnce(50, 0.02, x, 0.0001, 1))
+                if (test.ComputedOnce(50, 0.5, x, 0.0001, 1))
                     break;
                 if (t % 100 == 0) { 
                     int pause = 0; 

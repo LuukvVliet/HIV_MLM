@@ -54,6 +54,7 @@ namespace HIV_MLMv1
                 List<Individual> NextPopulation = new List<Individual> { };
                 foreach (Individual x in Population)
                 {
+                    //x.SolveOnce();
                     SolveSim.Solve(x.VirusDynamics, 0 , 1, 0.01); //Solve the ODE system for one timestep
                     //If something doesnt die, add it to the next population
                     if (RInt.NextDouble() > DeathProbability) NextPopulation.Add(x);
