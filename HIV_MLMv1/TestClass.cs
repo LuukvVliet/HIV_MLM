@@ -14,12 +14,11 @@ namespace HIV_MLMv1
         static void Main(string[] args)
         {
             int timelimit = 10000;
-            List<Tuple<double, double>> VirusDistribution = new List<Tuple<double, double>> {
-                //new Tuple<double, double>(500,0.0001),
-                new Tuple<double, double>(100,0.00011)
-                };
+            List<double> VirusBetas = new List<double> {
+                0.00011
+            };
             StateType StartingInfected = new StateType {100000, 10, 100 };
-            Individual test = new Individual(0, -1, StartingInfected, VirusDistribution);
+            Individual test = new Individual(0, -1, StartingInfected, VirusBetas);
             Solver SolveTest = new Solver();
             
             SolveTest.StepperCode = StepperTypeCode.RungeKutta4;

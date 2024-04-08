@@ -41,10 +41,14 @@ namespace HIV_MLMv1
             
             for(int i = 0; i < N; i++)
             {
-                List<Tuple<double, double>> StartingVirusConditions = new List<Tuple<double, double>> { new Tuple<double, double>(IcellStart, IcellStartBeta) };
-                Population.Add(new Individual(time, nextID, StartingInfected, StartingVirusConditions));
+                List<double> StartVBetas = new List<double>();
+                StartVBetas.Add(IcellStartBeta);
+                Population.Add(new Individual(time, nextID, StartingInfected, StartVBetas));
                 nextID++;
             }
+
+            //Create the ODE:
+            ODE Sim = new ODE();
 
             // Simulation loop
             Random RInt = new Random();
@@ -54,8 +58,10 @@ namespace HIV_MLMv1
                 List<Individual> NextPopulation = new List<Individual> { };
                 foreach (Individual x in Population)
                 {
+                    //Sim.SetInit()
+
                     //x.SolveOnce();
-                    SolveSim.Solve(x.VirusDynamics, 0 , 1, 0.01); //Solve the ODE system for one timestep
+                    SolveSim.Solve(Sim.VirusDynamics, 0 , 1, 0.01); //Solve the ODE system for one timestep
                     //If something doesnt die, add it to the next population
                     if (RInt.NextDouble() > DeathProbability) NextPopulation.Add(x);
                     else Graveyard.Add(new Tuple<Individual, string>(x, "Natural death"));
@@ -64,7 +70,8 @@ namespace HIV_MLMv1
                     if (RInt.NextDouble() <= InfectProbability) 
                     {
                         StateType NextInfection = new StateType { StartingInfected[0], StartingInfected[1], IcellStart };
-                        NextPopulation.Add(new Individual(time, nextID++, NextInfection, new List<Tuple<double, double>> { new Tuple<double, double>(IcellStart, x.NewInfection(RInt)) }));
+                        List<double> NextBetas = new List<double> { x.NewInfection(RInt) };
+                        NextPopulation.Add(new Individual(time, nextID++, NextInfection, NextBetas));
                     }; 
                     
                     //After something is computed once, see if it mutates or if a virus is outcompeted.
