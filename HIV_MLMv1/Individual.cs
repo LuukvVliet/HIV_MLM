@@ -34,11 +34,11 @@ namespace HIV_MLMv1
             VirusState = Init.Skip(2).ToList();
         }
         
-        public bool ComputedOnce(double tcellCutoff, double mr, Random rGen, double jumplimit, double newVirusAmount)
+        public bool ComputedOnce(double tcellCutoff, double mr, Random rGen, double jumplimit, double newVirusAmount, int VirusGrowth)
         {
-            return ComputedOnce(tcellCutoff, mr, rGen, 99999, jumplimit, newVirusAmount);
+            return ComputedOnce(tcellCutoff, mr, rGen, 99999, jumplimit, newVirusAmount, VirusGrowth);
         }
-        public bool ComputedOnce(double tcellCutoff, double mr, Random rGen, int VirusLimit, double jumplimit, double newVirusAmount)
+        public bool ComputedOnce(double tcellCutoff, double mr, Random rGen, int VirusLimit, double jumplimit, double newVirusAmount, int VirusGrowth)
         {
             //If a viral strain has more than 10% of the virus amount with which it usually infects, go to the next population.
             double cutoff = 0.1 * newVirusAmount;
@@ -69,11 +69,13 @@ namespace HIV_MLMv1
                 else
                     Console.WriteLine(virusB);
             }
-            
+
 
             //Mutations using a binomial distribution
+            //Mutations according to the total net growth.
             int newSum = (int)sumV;
-            var sample = Binomial.Sample(mr, newSum);
+            var sample = Binomial.Sample(mr, VirusGrowth);
+
             this.VirusState = LS.Skip(2).ToList();
             if (VBetas.Count < VirusLimit)
             {

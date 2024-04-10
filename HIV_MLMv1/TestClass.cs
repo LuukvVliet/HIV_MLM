@@ -15,12 +15,12 @@ namespace HIV_MLMv1
         {
             int timelimit = 10000;
             List<double> VirusBetas = new List<double> {
-                0.00011
+                0.00001
             };
-            StateType StartingInfected = new StateType { 100000, 10, 100 };
+            StateType StartingInfected = new StateType { 100000, 100, 10 };
             Individual test = new Individual(0, -1, StartingInfected, VirusBetas);
             Solver SolveTest = new Solver();
-            ODE testODE = new ODE();
+            ODE testODE = new ODE(1);
 
             SolveTest.StepperCode = StepperTypeCode.RungeKutta4;
 
@@ -33,7 +33,7 @@ namespace HIV_MLMv1
                 SolveTest.Solve(testODE.VirusDynamics, 0, 1, 0.01); //Solve the ODE system for one timestep
                 test.InternalState = testODE.VirusDynamics.InitialConditions; 
 
-                if (test.ComputedOnce(50, 0.000001, x, 0.0001, 1))
+                if (test.ComputedOnce(500, 0.0001, x, 0.00005, 1, testODE.GetVirusGrowth()))
                     break;
                 if (t % 100 == 0)
                 {

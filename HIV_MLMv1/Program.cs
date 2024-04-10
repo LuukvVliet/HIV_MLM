@@ -48,7 +48,7 @@ namespace HIV_MLMv1
             }
 
             //Create the ODE:
-            ODE Sim = new ODE();
+            ODE Sim = new ODE(1);
 
             // Simulation loop
             Random RInt = new Random();
@@ -67,7 +67,7 @@ namespace HIV_MLMv1
                     if (RInt.NextDouble() > DeathProbability) NextPopulation.Add(x);
                     else { Graveyard.Add(new Tuple<Individual, string>(x, "Natural death")); continue; }
                     //After something is computed once, see if it mutates or if a virus is outcompeted.
-                    if (x.ComputedOnce(TCellCutoff, MutationProbability, RInt, VirusCountLimit, MutationJumpLimit, VirusAmountOnMutate))
+                    if (x.ComputedOnce(TCellCutoff, MutationProbability, RInt, VirusCountLimit, MutationJumpLimit, VirusAmountOnMutate, Sim.GetVirusGrowth()))
                     { Graveyard.Add(new Tuple<Individual, string>(x, "T-cell depletion")); continue; }
                     //New infection
                     if (RInt.NextDouble() <= InfectProbability) 

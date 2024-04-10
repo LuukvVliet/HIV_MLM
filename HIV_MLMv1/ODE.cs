@@ -11,49 +11,60 @@ namespace HIV_MLMv1
     {
         public LambdaOde VirusDynamics;
         public List<StateType> History = new List<StateType>();
+        public List<List<double>> IntHist = new List<List<double>>();
         public List<double> VirusBetas;
         public double virusGrowth;
-        public ODE()
+        public ODE(int type)
         {
             virusGrowth = 0;
-
-            VirusDynamics = new LambdaOde
+            switch (type)
             {
-                
-                OdeObserver = (x, t) => { History.Add(x); },
-                OdeSystem = (x, dxdt, t) =>
-                {
-                    
-                    //Parameters currently taken from own R script (death rate from paper, replication too i believe. h1 determined)
-                    //Paper supplied by rob has no (apparently) usefull parameters (?).
-                    const double d1 = 0.01;
-                    const double d2 = 0.01;
-                    const double r = 0.111;
-                    const double delta = 0.5;
-                    const double a = 0.1;
-                    const double h1 = 1.09901 * 1000000;
-                    const double h2 = 100000;
-                    double sum = 0;
-                    double PerCapitaDeathToVirusTCells = 0;
-
-                    // T cells are dxdt[0], Effector cells are dxdt[1], rest is Virus cells.
-                    //Getting virus state from virusdistribution and putting it back in virusdistribution over and over is done to prevent n^2 time problems
-                    int c = 2;
-                    foreach (double beta in VirusBetas)
+                case 1:
+                    VirusDynamics = new LambdaOde
                     {
-                        sum += x[c];
-                        double netGrowth = beta * x[0] * x[c];
-                        virusGrowth += netGrowth;
 
-                        PerCapitaDeathToVirusTCells += beta * x[c];
-                        dxdt[c] = netGrowth - delta * x[1] * x[c];
-                        c++;
-                    }
+                        OdeObserver = (x, t) => { History.Add(x); IntHist.Add(new List<double> { x[0], x[1], x[2] }); },
+                        OdeSystem = (x, dxdt, t) =>
+                        {
 
-                    dxdt[0] = r * x[0] - d1 * x[0] - (x[0] * sum) / h1 - x[0] * PerCapitaDeathToVirusTCells; // T cells
-                    dxdt[1] = (a * x[1] * sum) / (h2 + x[1] + sum) - d2 * x[1];  // Effector cells
-                }
-            };
+                            //Parameters currently taken from own R script (death rate from paper, replication too i believe. h1 determined)
+                            //Paper supplied by rob has no (apparently) usefull parameters (?).
+                            const double d1 = 0.01;
+                            const double d2 = 0.01;
+                            const double r = 0.111;
+                            const double delta = 0.5;
+                            const double a = 0.1;
+                            const double h1 = 1.09901 * 1000000;
+                            const double h2 = 100000;
+                            double sum = 0;
+                            double PerCapitaDeathToVirusTCells = 0;
+
+                            // T cells are dxdt[0], Effector cells are dxdt[1], rest is Virus cells.
+                            //Getting virus state from virusdistribution and putting it back in virusdistribution over and over is done to prevent n^2 time problems
+                            int c = 2;
+                            foreach (double beta in VirusBetas)
+                            {
+                                sum += x[c];
+                                double netGrowth = beta * x[0] * x[c];
+                                virusGrowth += netGrowth;
+
+                                PerCapitaDeathToVirusTCells += beta * x[c];
+                                dxdt[c] = netGrowth - delta * x[1] * x[c];
+                                c++;
+                            }
+
+                            dxdt[0] = r * x[0] - d1 * x[0] - (x[0] * sum) / h1 - x[0] * PerCapitaDeathToVirusTCells; // T cells
+                            dxdt[1] = (a * x[1] * sum) / (h2 + x[1] + sum) - d2 * x[1];  // Effector cells
+                        }
+                    };
+                    break;
+                case 2:
+                    //
+                    // place alternative ODEs here.
+                    //
+                    break;
+            }
+            
         }
         public void SetInit(StateType x, List<double> betas)
         {
