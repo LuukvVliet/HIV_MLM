@@ -23,11 +23,7 @@ namespace HIV_MLMv1
                 OdeObserver = (x, t) => { History.Add(x); },
                 OdeSystem = (x, dxdt, t) =>
                 {
-                    //The following does not work: Somewhere, internally, a number of states is kept constant to what it was before, causing x to reset to its original size.
-                    //THIS:
-                    //if (!HasBeenUpdated)
-                    //{ x = updatedLS; dxdt.AddRange(updatedRange); 
-                    //    HasBeenUpdated = true; }
+                    
                     //Parameters currently taken from own R script (death rate from paper, replication too i believe. h1 determined)
                     //Paper supplied by rob has no (apparently) usefull parameters (?).
                     const double d1 = 0.01;

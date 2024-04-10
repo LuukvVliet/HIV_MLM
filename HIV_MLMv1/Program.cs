@@ -58,14 +58,17 @@ namespace HIV_MLMv1
                 List<Individual> NextPopulation = new List<Individual> { };
                 foreach (Individual x in Population)
                 {
-                    //Sim.SetInit()
-
-                    //x.SolveOnce();
+                    Sim.SetInit(x.InternalState, x.VBetas);         //Set the internals for the ODE
                     SolveSim.Solve(Sim.VirusDynamics, 0 , 1, 0.01); //Solve the ODE system for one timestep
+                    x.InternalState = Sim.VirusDynamics.InitialConditions; //Set the individual to the new internal state.
+
+
                     //If something doesnt die, add it to the next population
                     if (RInt.NextDouble() > DeathProbability) NextPopulation.Add(x);
-                    else Graveyard.Add(new Tuple<Individual, string>(x, "Natural death"));
-                    
+                    else { Graveyard.Add(new Tuple<Individual, string>(x, "Natural death")); continue; }
+                    //After something is computed once, see if it mutates or if a virus is outcompeted.
+                    if (x.ComputedOnce(TCellCutoff, MutationProbability, RInt, VirusCountLimit, MutationJumpLimit, VirusAmountOnMutate))
+                    { Graveyard.Add(new Tuple<Individual, string>(x, "T-cell depletion")); continue; }
                     //New infection
                     if (RInt.NextDouble() <= InfectProbability) 
                     {
@@ -73,10 +76,6 @@ namespace HIV_MLMv1
                         List<double> NextBetas = new List<double> { x.NewInfection(RInt) };
                         NextPopulation.Add(new Individual(time, nextID++, NextInfection, NextBetas));
                     }; 
-                    
-                    //After something is computed once, see if it mutates or if a virus is outcompeted.
-                    if(x.ComputedOnce(TCellCutoff, MutationProbability, RInt, VirusCountLimit, MutationJumpLimit, VirusAmountOnMutate))
-                        Graveyard.Add(new Tuple<Individual, string>(x, "T-cell depletion"));
                 }
                 time++;
                 Population = NextPopulation;

@@ -25,7 +25,6 @@ namespace HIV_MLMv1
         public List<double> VirusState { get; set; }
         public List<double> VBetas { get; set; }
 
-        List<Tuple<double, double>> VirusDistribution { get; set; } // First variable is amount, second variable is beta.
         public Individual(int tiem, int id, StateType Init, List<double> VB) 
         {
             ID = id;
@@ -61,11 +60,14 @@ namespace HIV_MLMv1
             {
                 if (LS[x] > cutoff)
                 {
+                    
                     NewLS.Add(LS[x]);
                     NewBetas.Add(virusB);
                     sumV += LS[x];
                     x++;
                 }
+                else
+                    Console.WriteLine(virusB);
             }
             
 
