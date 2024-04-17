@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using OdeLibrary;
+using System.IO;
+using System.Globalization;
 
 namespace HIV_MLMv1
 {
@@ -33,6 +35,10 @@ namespace HIV_MLMv1
 
         static void Main2(string[] args)
         {
+            //Read the outputdirectory
+            string DirOut = "";
+            DirOut = File.ReadAllText("");
+
             int nextID = 0; // ID tracking
             int xxx = StartingInfected.Count;
             //Initialize the population with a few infected individuals
@@ -79,6 +85,13 @@ namespace HIV_MLMv1
                 }
                 time++;
                 Population = NextPopulation;
+                if(time%1000 == 0 && time != 0)
+                {
+                    foreach(Tuple<Individual, string> ind in Graveyard)
+                    {
+
+                    }
+                }
             }
             int FINISH = 0;
 
