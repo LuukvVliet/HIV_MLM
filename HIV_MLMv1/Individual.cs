@@ -89,12 +89,13 @@ namespace HIV_MLMv1
                         targetmutation -= VirusState[i];
                     else
                     {
-                        target = VBetas[i];
+                        target = VBetas[i]; // Saving the beta of the originally mutated strain.
                         //Remove virus which mutates, up to 'newVirusAmount'
                         if (newVirusAmount - VirusState[i] > 0)
                             newVirusAmount = VirusState[i];
-                        //Adds the new virus
-                        NewLS.Add(VirusState[i] - newVirusAmount);
+                            //Adds the new virus
+                        VirusState[i] -= newVirusAmount;
+                        NewLS.Add(newVirusAmount);
                         break;
                     }
                 }

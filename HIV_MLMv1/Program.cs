@@ -22,7 +22,7 @@ namespace HIV_MLMv1
         public static int VirusCountLimit = 5;              //How many different strains of virus can exist in one individual?
         public static int VirusAmountOnMutate = 25;         //How many infected cells 'transfer' between two strains when one mutates?
 
-        public static StateType StartingInfected = new StateType { 10000, 10, 100 }; //State of the first 5 infected individuals
+        public static StateType StartingInfected = new StateType { 1000000, 2, 25 }; //State of the first 5 infected individuals
         
 
         //Recommended to leave these parameters be.
@@ -81,6 +81,10 @@ namespace HIV_MLMv1
                 Population = NextPopulation;
             }
             int FINISH = 0;
+
+
+            // ADD post-processing of lists
+            // Print to .csv type file for further analysis of model function.
         }
     }
 }
