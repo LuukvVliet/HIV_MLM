@@ -24,7 +24,7 @@ namespace HIV_MLMv1
         public static int VirusCountLimit = 5;              //How many different strains of virus can exist in one individual?
         public static int VirusAmountOnMutate = 25;         //How many infected cells 'transfer' between two strains when one mutates?
 
-        public static StateType StartingInfected = new StateType { 1000000, 2, 25 }; //State of the first 5 infected individuals
+        public static StateType StartingInfected = new StateType { 1000000, 5, 25 }; //State of the first 5 infected individuals
         
 
         //Recommended to leave these parameters be.
@@ -37,7 +37,7 @@ namespace HIV_MLMv1
         {
             //Read the outputdirectory
             string DirOut = "";
-            DirOut = File.ReadAllText("");
+            DirOut = File.ReadAllText("C:\\Users\\lukxi\\source\\repos\\HIV_MLMv1\\ToBeIgnored\\DirOut.txt");
 
             int nextID = 0; // ID tracking
             int xxx = StartingInfected.Count;
@@ -52,7 +52,7 @@ namespace HIV_MLMv1
                 Population.Add(new Individual(time, nextID, StartingInfected, StartVBetas));
                 nextID++;
             }
-
+              
             //Create the ODE:
             ODE Sim = new ODE(1);
 

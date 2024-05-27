@@ -88,6 +88,48 @@ namespace HIV_MLMv1
                         }
                     };
                     break;
+                case 3:
+                    VirusDynamics = new LambdaOde
+                    {
+
+                        OdeObserver = (x, t) =>
+                        {
+                            // History.Add(x); IntHist.Add(new List<double> { x[0], x[1], x[2] }); 
+                        },
+                        OdeSystem = (x, dxdt, t) =>
+                        {
+
+                            //Parameters currently taken from own R script (death rate from paper, replication too i believe. h1 determined)
+                            //Paper supplied by rob has no (apparently) usefull parameters (UNTRUE).
+                            const double r = 0.111;
+                            const double d1 = 0.01;
+                            const double delta = 0.5;
+                            const double h1 = 1.09901 * 1000000;
+                            const double a = 1.1;
+                            const double d2 = 0.1;
+                            const double h2 = 10000;
+                            double sum = 0;
+                            double PerCapitaDeathToTCells = 0;
+
+                            // T cells are dxdt[0], Effector cells are dxdt[1], rest is Virus cells.
+                            //Getting virus state from virusdistribution and putting it back in virusdistribution over and over is done to prevent n^2 time problems
+                            int c = 2;
+                            foreach (double beta in VirusBetas)
+                            {
+                                sum += x[c];
+                                double netGrowth = beta * x[0] * x[c];
+                                virusGrowth += netGrowth;
+
+                                PerCapitaDeathToTCells += beta * x[c];
+                                dxdt[c] = netGrowth - delta * x[1] * x[c];
+                                c++;
+                            }
+
+                            dxdt[0] = r * x[0] - d1 * x[0] - r * x[0] * (x[0] + sum) / h1 - x[0] * PerCapitaDeathToTCells; // T cells
+                            dxdt[1] = (a * x[1] * sum) / (h2 + x[1] + sum) - d2 * x[1];  // Effector cells
+                        }
+                    };
+                    break;
             }
             
         }
