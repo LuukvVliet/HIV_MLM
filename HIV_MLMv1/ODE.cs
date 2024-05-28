@@ -14,8 +14,10 @@ namespace HIV_MLMv1
         public List<List<double>> IntHist = new List<List<double>>();
         public List<double> VirusBetas;
         public double virusGrowth;
+        int sourceBase = 0;
         public ODE(int type)
         {
+            IntHist.Add(new List<double> { });
             virusGrowth = 0;
             switch (type)
             {
@@ -94,13 +96,16 @@ namespace HIV_MLMv1
 
                         OdeObserver = (x, t) =>
                         {
-                            // History.Add(x); IntHist.Add(new List<double> { x[0], x[1], x[2] }); 
+                            if(x.Count >2)
+                                IntHist[0].Add(x[2]);
+                        
                         },
                         OdeSystem = (x, dxdt, t) =>
                         {
 
                             //Parameters currently taken from own R script (death rate from paper, replication too i believe. h1 determined)
                             //Paper supplied by rob has no (apparently) usefull parameters (UNTRUE).
+                            double source = sourceBase;
                             const double r = 0.111;
                             const double d1 = 0.01;
                             const double delta = 0.5;
@@ -125,7 +130,7 @@ namespace HIV_MLMv1
                                 c++;
                             }
 
-                            dxdt[0] = r * x[0] - d1 * x[0] - r * x[0] * (x[0] + sum) / h1 - x[0] * PerCapitaDeathToTCells; // T cells
+                            dxdt[0] = source + r * x[0] - d1 * x[0] - r * x[0] * (x[0] + sum) / h1 - x[0] * PerCapitaDeathToTCells; // T cells
                             dxdt[1] = (a * x[1] * sum) / (h2 + x[1] + sum) - d2 * x[1];  // Effector cells
                         }
                     };
