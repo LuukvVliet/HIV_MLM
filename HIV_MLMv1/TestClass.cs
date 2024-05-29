@@ -14,12 +14,10 @@ namespace HIV_MLMv1
         // Somehow, there needs to be some capping method to the virus population. 
         // The amount of strains run out of control, consuming insane amounts of processor power.
 
-
-        // Actually, contrary what we discussed before, new virus infection amount does matter (slightly, perhaps).
-        // Effectively, increasing the amount of virus which mutates and the mutation rate can have a very similar effect (up to a certain degree)
-
-        //Simulation parameters, with N being the starting size of the population.
-
+        //This piece of code generates a List of Lists, of which the first list is the used betas in the parameter sweep.
+        //Each subsequent list then has the used Source as their first value
+        //Each other value is either the lowest point of the viral load, -1 if the virus went extinct due to oscillatory behaviour 
+        //and -2 if the individual went extinct.
 
         static void Main(string[] args)
         {
@@ -39,14 +37,14 @@ namespace HIV_MLMv1
             bool BetaAdded = false;
             List<double> BetaList = new List<double>();
             //TestLoop(s)
-            List<List<double>> externalSweep = new List<List<double>>(); //For s tor
+            List<List<double>> externalSweep = new List<List<double>>(); 
             List<double> internalSweep = new List<double>();
             ODE testODE = new ODE(3);
             for (double sourceP = 50; sourceP < 100000; sourceP *= 1.5)
             {
                 for (double Beta = 0.000001; Beta < 0.001; Beta *= 1.5)
                 {
-
+                    BetaList.Add(Beta);
                     
                     List<double> VirusBetas = new List<double> {
                     Beta
@@ -58,19 +56,22 @@ namespace HIV_MLMv1
                     while (t < timelimit)
                     {
 
-                        testODE.SetInit(test.InternalState, test.VBetas);         //Set the internals for the ODE
+                        testODE.SetInit(test.InternalState, test.VBetas);                                       //Set the internals for the ODE
                         SolveTest.Solve(testODE.VirusDynamics, 0, 0.05, 1, IntegrateFunctionTypeCode.Adaptive); //Solve the ODE system for one timestep
                         test.InternalState = testODE.VirusDynamics.InitialConditions;
 
                         //Triggers if individual goes extinct
                         if (test.ComputedOnce(200, 0, x, 0.000005, 1, testODE.GetVirusGrowth()))
                         {
+                            internalSweep.Add(-2);
                             break;
                         }
 
                         //Triggers if virus goes extinct by seeing if the sequence of virus history stops keeping track
                         if (PrevCount == testODE.IntHist[0].Count)
                         {
+
+                            internalSweep.Add(-1);
                             break;
                         }
 
@@ -82,10 +83,10 @@ namespace HIV_MLMv1
                             int pause = 0;
                         }
                         t++;
+                        
+                        if(t == timelimit-1)
+                            internalSweep.Add(testODE.IntHist[0].Min());
                     }
-                    internalSweep.Add(Beta);
-                    internalSweep.Add(testODE.IntHist[0].Min());
-                    //testODE.IntHist = new List<List<double>> {new List<double>() };
                     t = 0;
                 }
                 internalSweep.Prepend(sourceP);
