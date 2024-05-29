@@ -23,11 +23,10 @@ namespace HIV_MLMv1
 
         static void Main(string[] args)
         {
-            List<List<double>> Debug = new List<List<double>>();
-            int timelimit = 10000;
+            
+            int timelimit = 200;
            
             Solver SolveTest = new Solver();
-            ODE testODE = new ODE(3);
 
             SolveTest.StepperCode = StepperTypeCode.RungeKutta4;
 
@@ -36,52 +35,64 @@ namespace HIV_MLMv1
 
             int t = 0;
             Random x = new Random();
-            //TestLoop
-            List<double> betasSweep = new List<double>(); //For s tor
-            List<double> ParamSweep = new List<double>();
-            for(double Param = 0.000001; Param <0.001; Param *= 1.5)
-            {
-                double LowestPoint = 10000000;
-                List<double> VirusBetas = new List<double> {
-                0.000005
-                 };
-                StateType StartingInfected = new StateType { 1000000, 1, 25 };
-                Individual test = new Individual(0, -1, StartingInfected, VirusBetas);
-                int PrevCount = 0;
 
-                while (t < timelimit)
+            bool BetaAdded = false;
+            List<double> BetaList = new List<double>();
+            //TestLoop(s)
+            List<List<double>> externalSweep = new List<List<double>>(); //For s tor
+            List<double> internalSweep = new List<double>();
+            ODE testODE = new ODE(3);
+            for (double sourceP = 50; sourceP < 100000; sourceP *= 1.5)
+            {
+                for (double Beta = 0.000001; Beta < 0.001; Beta *= 1.5)
                 {
 
-                    testODE.SetInit(test.InternalState, test.VBetas);         //Set the internals for the ODE
-                    SolveTest.Solve(testODE.VirusDynamics, 0, 0.1, 1, IntegrateFunctionTypeCode.Adaptive); //Solve the ODE system for one timestep
-                    test.InternalState = testODE.VirusDynamics.InitialConditions;
-                    Debug.Add(test.InternalState.ToList());
                     
-                    //Triggers if individual goes extinct
-                    if (test.ComputedOnce(200, 0, x, 0.000005, 1, testODE.GetVirusGrowth()))
-                    {
-                        ParamSweep.Add(testODE.IntHist[0].Min());
-                        break;
-                    }
-                    
-                    //Triggers if virus goes extinct by seeing if the sequence of virus history stops keeping track
-                    if (PrevCount == testODE.IntHist[0].Count)
-                    {
-                        ParamSweep.Add(testODE.IntHist[0].Min());
-                        break;
-                    }
-                
-                    PrevCount = testODE.IntHist[0].Count;
-                    
+                    List<double> VirusBetas = new List<double> {
+                    Beta
+                 };
+                    StateType StartingInfected = new StateType { 1000000, 1, 25 };
+                    Individual test = new Individual(0, -1, StartingInfected, VirusBetas);
+                    int PrevCount = 0;
 
-                    if (t % 100 == 0)
+                    while (t < timelimit)
                     {
-                        int pause = 0;
+
+                        testODE.SetInit(test.InternalState, test.VBetas);         //Set the internals for the ODE
+                        SolveTest.Solve(testODE.VirusDynamics, 0, 0.05, 1, IntegrateFunctionTypeCode.Adaptive); //Solve the ODE system for one timestep
+                        test.InternalState = testODE.VirusDynamics.InitialConditions;
+
+                        //Triggers if individual goes extinct
+                        if (test.ComputedOnce(200, 0, x, 0.000005, 1, testODE.GetVirusGrowth()))
+                        {
+                            break;
+                        }
+
+                        //Triggers if virus goes extinct by seeing if the sequence of virus history stops keeping track
+                        if (PrevCount == testODE.IntHist[0].Count)
+                        {
+                            break;
+                        }
+
+                        PrevCount = testODE.IntHist[0].Count;
+
+
+                        if (t % 100 == 0)
+                        {
+                            int pause = 0;
+                        }
+                        t++;
                     }
-                    t++;
+                    internalSweep.Add(Beta);
+                    internalSweep.Add(testODE.IntHist[0].Min());
+                    //testODE.IntHist = new List<List<double>> {new List<double>() };
+                    t = 0;
                 }
-                betasSweep.Add(Param);
+                internalSweep.Prepend(sourceP);
+                externalSweep.Add(internalSweep);
             }
+
+            
         }
     }
 }

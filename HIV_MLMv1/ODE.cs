@@ -148,6 +148,8 @@ namespace HIV_MLMv1
         {
             int growth = 0;
             growth = (int)virusGrowth;
+            if (growth < 0)
+                growth = int.MaxValue;
             virusGrowth = 0;
             return growth;
         }

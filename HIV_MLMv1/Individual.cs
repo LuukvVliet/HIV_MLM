@@ -18,7 +18,7 @@ namespace HIV_MLMv1
         // Aantal mutaties schaalt met de TOEVOER van virus, niet het totaal aantal virus
     {
         public LambdaOde VirusDynamics { get; set; }
-        
+        public List<Binomial> BinomialDatabase { get; set; }
         int ID { get; set; }
         int externalTime;
         public StateType InternalState { get; set; }
@@ -33,7 +33,16 @@ namespace HIV_MLMv1
             VBetas = VB;
             VirusState = Init.Skip(2).ToList();
         }
-        
+        public Individual(int tiem, int id, StateType Init, List<double> VB, List<Binomial> BDB)
+        {
+            ID = id;
+            externalTime = tiem;
+            InternalState = Init;
+            VBetas = VB;
+            VirusState = Init.Skip(2).ToList();
+            BinomialDatabase = BDB;
+        }
+
         public bool ComputedOnce(double tcellCutoff, double mr, Random rGen, double jumplimit, double newVirusAmount, int VirusGrowth)
         {
             return ComputedOnce(tcellCutoff, mr, rGen, 99999, jumplimit, newVirusAmount, VirusGrowth);
@@ -41,7 +50,7 @@ namespace HIV_MLMv1
         public bool ComputedOnce(double tcellCutoff, double mr, Random rGen, int VirusLimit, double jumplimit, double newVirusAmount, int VirusGrowth)
         {
             //If a viral strain has more than 10% of the virus amount with which it usually infects, go to the next population.
-            double cutoff = 0.1 * newVirusAmount;
+            double cutoff = 0.99 * newVirusAmount;
             //SumV is used to calculate probability distributions
             double sumV = 0;
             //Checks to see if the individual still has enough T cells to continue living: returns true if not.
@@ -74,8 +83,14 @@ namespace HIV_MLMv1
             //Mutations using a binomial distribution
             //Mutations according to the total net growth.
             int newSum = (int)sumV;
-            var sample = Binomial.Sample(mr, VirusGrowth);
 
+            //THIS one line of code is by far the most time consuming:
+
+            int sample = 0;
+           /* if (BinomialDatabase != null)
+                sample = BinomialDatabase[VirusGrowth / 50].Sample();
+            else sample = Binomial.Sample(mr, VirusGrowth);
+           */
             this.VirusState = LS.Skip(2).ToList();
             if (VBetas.Count < VirusLimit)
             {
