@@ -38,10 +38,10 @@ namespace HIV_MLMv1
             List<double> BetaList = new List<double>();
             //TestLoop(s)
             List<List<double>> externalSweep = new List<List<double>>(); 
-            List<double> internalSweep = new List<double>();
             ODE testODE = new ODE(3);
             for (double sourceP = 50; sourceP < 100000; sourceP *= 1.5)
             {
+                List<double> internalSweep = new List<double>();
                 for (double Beta = 0.000001; Beta < 0.001; Beta *= 1.5)
                 {
                     BetaList.Add(Beta);
@@ -92,8 +92,6 @@ namespace HIV_MLMv1
                 internalSweep.Prepend(sourceP);
                 externalSweep.Add(internalSweep);
             }
-
-            
         }
     }
 }
