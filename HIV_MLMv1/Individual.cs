@@ -47,7 +47,7 @@ namespace HIV_MLMv1
         {
             return ComputedOnce(tcellCutoff, mr, rGen, 99999, jumplimit, newVirusAmount, VirusGrowth);
         }
-        public bool ComputedOnce(double tcellCutoff, double mr, Random rGen, int VirusLimit, double jumplimit, double newVirusAmount, int VirusGrowth)
+        public bool ComputedOnce(double tcellCutoff, double mr, Random rGen, int VirusLimit, double NextBeta, double newVirusAmount, int VirusGrowth)
         {
             //If a viral strain has more than 10% of the virus amount with which it usually infects, go to the next population.
             double cutoff = 0.99 * newVirusAmount;
@@ -80,13 +80,18 @@ namespace HIV_MLMv1
             }
 
 
-            //Mutations using a binomial distribution
+            int mutations = 0;
             //Mutations according to the total net growth.
             int newSum = (int)sumV;
 
+            //Mutations according to the deterministic average:
+            double expectedMut = mr * sumV;
+            if (expectedMut > 1)
+                mutations = (int)Math.Round(expectedMut);
+            else if (rGen.NextDouble() < expectedMut)
+                mutations = 1;
             //THIS one line of code is by far the most time consuming:
-
-            int sample = 0;
+            //Mutations using a binomial distribution
            /* if (BinomialDatabase != null)
                 sample = BinomialDatabase[VirusGrowth / 50].Sample();
             else sample = Binomial.Sample(mr, VirusGrowth);
@@ -95,26 +100,48 @@ namespace HIV_MLMv1
             if (VBetas.Count < VirusLimit)
             {
                 
-                for(int trial = 0; trial < sample; trial++) { 
+                for(int trial = 0; trial < mutations; trial++) { 
                 double targetmutation = rGen.Next(0, newSum);
                 double target = 0;
                 for (int i = 0; i < VBetas.Count; i++)
                 {
                     if (VirusState[i] <= targetmutation)
                         targetmutation -= VirusState[i];
+                    //On else, this strain is chosen to mutate
                     else
                     {
                         target = VBetas[i]; // Saving the beta of the originally mutated strain.
                         //Remove virus which mutates, up to 'newVirusAmount'
                         if (newVirusAmount - VirusState[i] > 0)
                             newVirusAmount = VirusState[i];
-                            //Adds the new virus
                         VirusState[i] -= newVirusAmount;
-                        NewLS.Add(newVirusAmount);
+                        // Determine whether the next bin or previous bin should be mutated to
+                        if (rGen.NextBoolean())
+                            target -= NextBeta;
+                        else
+                            target += NextBeta;
+                            // See if this bin already exists in the list
+                        bool newV = true;
+                        for (int why = 0; why < NewBetas.Count; why++)
+                        {
+                             if (NewBetas[why] == target)
+                                {
+                                    NewLS[why + 2] += newVirusAmount;
+                                    newV = false;
+                                    break;
+                                }
+                        }
+
+                        // Bin does not exist, add new bin
+                        if (newV)
+                            {
+                                NewLS.Add(newVirusAmount);
+                                NewBetas.Add(target);
+                            }
                         break;
                     }
                 }
-                target += ((double)(rGen.Next(1, 100) - rGen.Next(1, 100))) / 100 * jumplimit;
+               
                 if (target < 0) target = 0; //dont have a negative beta
                 //Adds the new virus' new beta
                 NewBetas.Add(target);

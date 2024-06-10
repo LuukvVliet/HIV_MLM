@@ -33,12 +33,33 @@ namespace HIV_MLMv1
 
             int t = 0;
             Random x = new Random();
+            ODE testODE = new ODE(3);
+            List<double> VirusBetas = new List<double> {
+                    0.0000066
+                 };
+            StateType StartingInfected = new StateType { 1000000, 1, 25 };
+            Individual test = new Individual(0, -1, StartingInfected, VirusBetas);
+            while (t < timelimit)
+            {
 
-            bool BetaAdded = false;
+                testODE.SetInit(test.InternalState, test.VBetas);                                       //Set the internals for the ODE
+                SolveTest.Solve(testODE.VirusDynamics, 0, 0.05, 1, IntegrateFunctionTypeCode.Adaptive); //Solve the ODE system for one timestep
+                test.InternalState = testODE.VirusDynamics.InitialConditions;                           //Retrieve the now solved internals
+
+                //Triggers if individual goes extinct
+                if (test.ComputedOnce(200, 0, x, 0.000005, 1, testODE.GetVirusGrowth()))
+                {
+                    break;
+                }
+                t++;
+               
+            }
+
+
+            /*bool BetaAdded = false;
             List<double> BetaList = new List<double>();
             //TestLoop(s)
             List<List<double>> externalSweep = new List<List<double>>(); 
-            ODE testODE = new ODE(3);
             for (double sourceP = 50; sourceP < 100000; sourceP *= 1.5)
             {
                 List<double> internalSweep = new List<double>();
@@ -91,7 +112,7 @@ namespace HIV_MLMv1
                 }
                 internalSweep.Prepend(sourceP);
                 externalSweep.Add(internalSweep);
-            }
+            }*/
         }
     }
 }

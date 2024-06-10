@@ -14,7 +14,8 @@ namespace HIV_MLMv1
         public List<List<double>> IntHist = new List<List<double>>();
         public List<double> VirusBetas;
         public double virusGrowth;
-        int sourceBase = 10000;
+        int sourceBase = 20000;
+        double firstBeta = 0;
         public ODE(int type)
         {
             IntHist.Add(new List<double> { });
@@ -43,7 +44,7 @@ namespace HIV_MLMv1
                             const double h2 = 10000;
                             double sum = 0;
                             double PerCapitaDeathToTCells = 0;
-
+                            firstBeta = 0;
                             // T cells are dxdt[0], Effector cells are dxdt[1], rest is Virus cells.
                             //Getting virus state from virusdistribution and putting it back in virusdistribution over and over is done to prevent n^2 time problems
                             int c = 2;
@@ -107,14 +108,17 @@ namespace HIV_MLMv1
                             //Paper supplied by rob has no (apparently) usefull parameters (UNTRUE).
                             double source = sourceBase;
                             const double r = 0;
-                            const double d1 = 0.01;
+                            const double d1 = 0.02;
                             const double delta = 0.5;
-                            const double h1 = 1.09901 * 1000000;
                             const double a = 1.1;
                             const double d2 = 0.1;
+                            const double h1 = 1;
                             const double h2 = 10000;
+                            const double eE = 1.1;
+                            const double eI = 1;
                             double sum = 0;
                             double PerCapitaDeathToTCells = 0;
+                            
 
                             // T cells are dxdt[0], Effector cells are dxdt[1], rest is Virus cells.
                             //Getting virus state from virusdistribution and putting it back in virusdistribution over and over is done to prevent n^2 time problems
@@ -125,13 +129,14 @@ namespace HIV_MLMv1
                                 double netGrowth = beta * x[0] * x[c];
                                 virusGrowth += netGrowth;
 
+                                
                                 PerCapitaDeathToTCells += beta * x[c];
                                 dxdt[c] = netGrowth - delta * x[1] * x[c];
                                 c++;
                             }
 
-                            dxdt[0] = source + r * x[0] - d1 * x[0] - x[0] * PerCapitaDeathToTCells; // T cells
-                            dxdt[1] = (a * x[1] * sum) / (h2 + x[1] + sum) - d2 * x[1];  // Effector cells
+                            dxdt[0] = source + r * x[0] - d1 * x[0] - x[0] * PerCapitaDeathToTCells/(h1 + sum*eI + eI*x[0]); // T cells
+                            dxdt[1] = (a * x[1] * sum) / (h2 + eE*x[1] + eE*sum) - d2 * x[1];  // Effector cells
                         }
                     };
                     break;

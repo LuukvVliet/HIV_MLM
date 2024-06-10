@@ -16,7 +16,7 @@ namespace HIV_MLMv1
         public static double InfectProbability = 0.02;      //Infection probability of new individuals
         public static double DeathProbability = 0;          //Base Deathrate of Individuals
         public static double MutationProbability = 0.05;    //Mutation chance of virus; should be scaled to amount of virus
-        public static double MutationJumpLimit = 0.0001;    //The limit of how much a mutation can increase or decrease the beta parameter 
+        public static double MutationBinDistance = 0.0001;    //The limit of how much a mutation can increase or decrease the beta parameter 
                                                             //NOTE: Increase and decrease of beta is done by a "normal" distribution (or an approximation) so getting the limit is highly unlikely. (as a matter of fact, it is one in ten thousand)
         public static double TCellCutoff = 100;             //At what threshold does an individual not have enough T cells to live anymore?
         public static int N = 100;                          //Starting amount of infected individuals.
@@ -75,7 +75,7 @@ namespace HIV_MLMv1
                     if (RInt.NextDouble() > DeathProbability) NextPopulation.Add(x);
                     else { Graveyard.Add(new Tuple<Individual, string>(x, "Natural death")); continue; }
                     //After something is computed once, see if it mutates or if a virus is outcompeted.
-                    if (x.ComputedOnce(TCellCutoff, MutationProbability, RInt, VirusCountLimit, MutationJumpLimit, VirusAmountOnMutate, Sim.GetVirusGrowth()))
+                    if (x.ComputedOnce(TCellCutoff, MutationProbability, RInt, VirusCountLimit, MutationBinDistance, VirusAmountOnMutate, Sim.GetVirusGrowth()))
                     { Graveyard.Add(new Tuple<Individual, string>(x, "T-cell depletion")); continue; }
 
                     //New infection using distribution samples
