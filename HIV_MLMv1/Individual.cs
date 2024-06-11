@@ -14,11 +14,9 @@ namespace HIV_MLMv1
 
         // POSSIBLE OPTIMIZATIONS:
         // VECTOR MULTIPLICATION INSTEAD OF LOOPING OVER LIST
-        // PREMPTIVELY CALCULATING BINOMIAL DISTRIBUTIONS
         // Aantal mutaties schaalt met de TOEVOER van virus, niet het totaal aantal virus
     {
         public LambdaOde VirusDynamics { get; set; }
-        public List<Binomial> BinomialDatabase { get; set; }
         int ID { get; set; }
         int externalTime;
         public StateType InternalState { get; set; }
@@ -33,15 +31,7 @@ namespace HIV_MLMv1
             VBetas = VB;
             VirusState = Init.Skip(2).ToList();
         }
-        public Individual(int tiem, int id, StateType Init, List<double> VB, List<Binomial> BDB)
-        {
-            ID = id;
-            externalTime = tiem;
-            InternalState = Init;
-            VBetas = VB;
-            VirusState = Init.Skip(2).ToList();
-            BinomialDatabase = BDB;
-        }
+        
 
         public bool ComputedOnce(double tcellCutoff, double mr, Random rGen, double jumplimit, double newVirusAmount, int VirusGrowth)
         {

@@ -35,7 +35,7 @@ namespace HIV_MLMv1
             Random x = new Random();
             ODE testODE = new ODE(3);
             List<double> VirusBetas = new List<double> {
-                    0.0000066
+                    0.000004
                  };
             StateType StartingInfected = new StateType { 1000000, 1, 25 };
             Individual test = new Individual(0, -1, StartingInfected, VirusBetas);

@@ -158,5 +158,9 @@ namespace HIV_MLMv1
             virusGrowth = 0;
             return growth;
         }
+        public void CalcBeta()
+        {
+            // Cant really be done this way
+        }
     }
 }
