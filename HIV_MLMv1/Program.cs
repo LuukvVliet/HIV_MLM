@@ -55,7 +55,7 @@ namespace HIV_MLMv1
             }
               
             //Create the ODE:
-            ODE Sim = new ODE(1);
+            ODE Sim = new ODE(3);
 
             // Simulation loop
             Random RInt = new Random();

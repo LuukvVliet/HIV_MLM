@@ -15,7 +15,6 @@ namespace HIV_MLMv1
         public List<double> VirusBetas;
         public double virusGrowth;
         int sourceBase = 20000;
-        double firstBeta = 0;
         public ODE(int type)
         {
             IntHist.Add(new List<double> { });
@@ -44,7 +43,6 @@ namespace HIV_MLMv1
                             const double h2 = 10000;
                             double sum = 0;
                             double PerCapitaDeathToTCells = 0;
-                            firstBeta = 0;
                             // T cells are dxdt[0], Effector cells are dxdt[1], rest is Virus cells.
                             //Getting virus state from virusdistribution and putting it back in virusdistribution over and over is done to prevent n^2 time problems
                             int c = 2;
@@ -107,36 +105,40 @@ namespace HIV_MLMv1
                             //Parameters currently taken from own R script (death rate from paper, replication too i believe. h1 determined)
                             //Paper supplied by rob has no (apparently) usefull parameters (UNTRUE).
                             double source = sourceBase;
+                            const double KT = 1000000;
                             const double r = 0;
                             const double d1 = 0.02;
-                            const double delta = 0.5;
+                            const double deltaI = 0.5;
+                            const double k = 1;
                             const double a = 1.1;
-                            const double d2 = 0.1;
-                            const double h1 = 1;
-                            const double h2 = 10000;
+                            const double deltaE = 0.1;
+                            const double hE = 10000;
                             const double eE = 1.1;
-                            const double eI = 1;
-                            double sum = 0;
-                            double PerCapitaDeathToTCells = 0;
-                            
+                            const double eI = 1/KT;
+
+                            double effectorGrowth = 0;
+                            double thisVirusGrowth = 0;
 
                             // T cells are dxdt[0], Effector cells are dxdt[1], rest is Virus cells.
                             //Getting virus state from virusdistribution and putting it back in virusdistribution over and over is done to prevent n^2 time problems
                             int c = 2;
                             foreach (double beta in VirusBetas)
                             {
-                                sum += x[c];
-                                double netGrowth = beta * x[0] * x[c];
-                                virusGrowth += netGrowth;
-
                                 
-                                PerCapitaDeathToTCells += beta * x[c];
-                                dxdt[c] = netGrowth - delta * x[1] * x[c];
+                                double netGrowth = beta * x[0] * x[c]/(1+eI*x[0]+eI*x[c]);
+                                double netEffectorDeath = x[1] * x[c] / (hE + eE * x[1] + eE * x[c]);
+                                effectorGrowth += a*netEffectorDeath;
+                                thisVirusGrowth += netGrowth;
+                                
+
+                                dxdt[c] = netGrowth - deltaI*x[c] - k*netEffectorDeath;
                                 c++;
                             }
 
-                            dxdt[0] = source + r * x[0] - d1 * x[0] - x[0] * PerCapitaDeathToTCells/(h1 + sum*eI + eI*x[0]); // T cells
-                            dxdt[1] = (a * x[1] * sum) / (h2 + eE*x[1] + eE*sum) - d2 * x[1];  // Effector cells
+                            dxdt[0] = source + r * x[0] - d1 * x[0] - thisVirusGrowth; // T cells
+                            dxdt[1] = effectorGrowth - deltaE * x[1];  // Effector cells
+
+                            virusGrowth += thisVirusGrowth;
                         }
                     };
                     break;
@@ -149,6 +151,7 @@ namespace HIV_MLMv1
             VirusBetas = betas;
             virusGrowth = 0;
         }
+        //Function used to get the Virus growth over the last period. Resets virus growth back to 0.
         public int GetVirusGrowth()
         {
             int growth = 0;
@@ -157,10 +160,6 @@ namespace HIV_MLMv1
                 growth = int.MaxValue;
             virusGrowth = 0;
             return growth;
-        }
-        public void CalcBeta()
-        {
-            // Cant really be done this way
         }
     }
 }

@@ -16,12 +16,12 @@ namespace HIV_MLMv1
         // VECTOR MULTIPLICATION INSTEAD OF LOOPING OVER LIST
         // Aantal mutaties schaalt met de TOEVOER van virus, niet het totaal aantal virus
     {
-        public LambdaOde VirusDynamics { get; set; }
         int ID { get; set; }
         int externalTime;
         public StateType InternalState { get; set; }
         public List<double> VirusState { get; set; }
         public List<double> VBetas { get; set; }
+        public List<StateType> StateHistory { get; set; }
 
         public Individual(int tiem, int id, StateType Init, List<double> VB) 
         {
@@ -45,6 +45,7 @@ namespace HIV_MLMv1
             double sumV = 0;
             //Checks to see if the individual still has enough T cells to continue living: returns true if not.
             StateType LS = InternalState;
+            StateHistory.Add(LS);
             if (LS[0] <= tcellCutoff)
                 return true;
             
@@ -110,6 +111,7 @@ namespace HIV_MLMv1
                             target -= NextBeta;
                         else
                             target += NextBeta;
+                        if (target < 0) target = 0;
                             // See if this bin already exists in the list
                         bool newV = true;
                         for (int why = 0; why < NewBetas.Count; why++)
@@ -132,9 +134,7 @@ namespace HIV_MLMv1
                     }
                 }
                
-                if (target < 0) target = 0; //dont have a negative beta
-                //Adds the new virus' new beta
-                NewBetas.Add(target);
+                
                 }
             }
 
