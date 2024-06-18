@@ -13,6 +13,7 @@ namespace HIV_MLMv1
         public List<StateType> History = new List<StateType>();
         public List<List<double>> IntHist = new List<List<double>>();
         public List<double> VirusBetas;
+        
         public double virusGrowth;
         int sourceBase = 20000;
         public ODE(int type)

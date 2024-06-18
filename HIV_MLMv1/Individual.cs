@@ -21,7 +21,7 @@ namespace HIV_MLMv1
         public StateType InternalState { get; set; }
         public List<double> VirusState { get; set; }
         public List<double> VBetas { get; set; }
-        public List<StateType> StateHistory { get; set; }
+        public List<List<double>> StateHistory { get; set; }
 
         public Individual(int tiem, int id, StateType Init, List<double> VB) 
         {
@@ -30,6 +30,7 @@ namespace HIV_MLMv1
             InternalState = Init;
             VBetas = VB;
             VirusState = Init.Skip(2).ToList();
+            StateHistory = new List<List<double>>();
         }
         
 
@@ -45,7 +46,7 @@ namespace HIV_MLMv1
             double sumV = 0;
             //Checks to see if the individual still has enough T cells to continue living: returns true if not.
             StateType LS = InternalState;
-            StateHistory.Add(LS);
+            StateHistory.Add(LS.ToList());
             if (LS[0] <= tcellCutoff)
                 return true;
             

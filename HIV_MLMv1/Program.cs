@@ -41,7 +41,6 @@ namespace HIV_MLMv1
             DirOut = File.ReadAllText("C:\\Users\\lukxi\\source\\repos\\HIV_MLMv1\\ToBeIgnored\\DirOut.txt");
 
             int nextID = 0; // ID tracking
-            int xxx = StartingInfected.Count;
             //Initialize the population with a few infected individuals
             List<Individual> Population = new List<Individual> { };
             List<Tuple<Individual, string>> Graveyard = new List<Tuple<Individual, string>> { };
@@ -87,10 +86,21 @@ namespace HIV_MLMv1
                 while (NewInfections > 0)
                 {
                     
+                    //These are the states of the next infection
                     StateType NextInfection = new StateType { StartingInfected[0], StartingInfected[1], IcellStart };
-                   // List<double> NextBetas = new List<double> { x.NewInfection(RInt) };
-                   // NextPopulation.Add(new Individual(time, nextID++, NextInfection, NextBetas));
+                    List<double> NextBetas = new List<double>();
+                    // By weighted draw, determine which individual and what beta jumps to the next individual.
+                    int targetIndv = RInt.Next(0, totalVirusLoad);
+                    int tracker = 0;
+                    while (tracker < VirusLoads.Count)
+                    {
+                        if(targetIndv < VirusLoads[tracker])
+                        {
 
+                        }
+                    }
+
+                    Population.Add(new Individual(time, nextID++, NextInfection, NextBetas));
                     NewInfections--;
                 };
                 time++;
