@@ -22,7 +22,7 @@ namespace HIV_MLMv1
         static void Main(string[] args)
         {
              
-            int timelimit = 500;
+            int timelimit = 200000;
            
             Solver SolveTest = new Solver();
 
@@ -37,7 +37,7 @@ namespace HIV_MLMv1
             List<double> VirusBetas = new List<double> {
                     0.00000400005
                  };
-            StateType StartingInfected = new StateType { 1000000, 1, 25 };
+            StateType StartingInfected = new StateType { 1000000, 1, 25, 0 };
             Individual test = new Individual(0, -1, StartingInfected, VirusBetas);
             while (t < timelimit)
             {
@@ -47,13 +47,14 @@ namespace HIV_MLMv1
                 test.InternalState = testODE.VirusDynamics.InitialConditions;                           //Retrieve the now solved internals
 
                 //Triggers if individual goes extinct
-                if (test.ComputedOnce(200, 0, x, 0.000001, 25, testODE.GetVirusGrowth()))
+                if (test.ComputedOnce(10000, 0.00001, x, 0.000004, 25, testODE.GetVirusGrowth()))
                 {
                     break;
                 }
                 t++;
                 if (t % 100 == 0)
                 {
+                    Console.WriteLine(test.InternalState[0]);
                     int pause = 0;
                 }
             }

@@ -116,6 +116,8 @@ namespace HIV_MLMv1
                             const double hE = 10000;
                             const double eE = 1.1;
                             const double eI = 1/KT;
+                            const double fraqL = 0.04;
+                            const double activL = 0.05;
 
                             double effectorGrowth = 0;
                             double thisVirusGrowth = 0;
@@ -132,8 +134,9 @@ namespace HIV_MLMv1
                                 thisVirusGrowth += netGrowth;
                                 
 
-                                dxdt[c] = netGrowth - deltaI*x[c] - k*netEffectorDeath;
-                                c++;
+                                dxdt[c] = (1-fraqL)*netGrowth + activL*x[c+1] - deltaI*x[c] - k*netEffectorDeath;
+                                dxdt[c + 1] = fraqL * netGrowth - d1 * x[c + 1] - activL * x[c + 1];
+                                c += 2;
                             }
 
                             dxdt[0] = source + r * x[0] - d1 * x[0] - thisVirusGrowth; // T cells

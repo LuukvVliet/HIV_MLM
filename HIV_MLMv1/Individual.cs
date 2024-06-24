@@ -50,6 +50,8 @@ namespace HIV_MLMv1
             if (LS[0] <= tcellCutoff)
                 return true;
             
+            
+
             //Updates the VirusDistribution
             List<Tuple<double, double>> tempVirusDistribution = new List<Tuple<double, double>>();
             StateType NewLS = new StateType();
@@ -59,16 +61,37 @@ namespace HIV_MLMv1
             int x = 2;
             foreach(double virusB in VBetas)
             {
-                if (LS[x] > cutoff)
-                {
-                    
-                    NewLS.Add(LS[x]);
-                    NewBetas.Add(virusB);
-                    sumV += LS[x];
-                    x++;
-                }
+                if ((LS.Count - 2) == 2 * VBetas.Count) // Check whether the compartimental model is being ran
+                    if (LS[x] + LS[x + 1] > cutoff)
+                    {
+
+                        NewLS.Add(LS[x]);
+                        NewLS.Add(LS[x + 1]);
+                        NewBetas.Add(virusB);
+                        sumV += LS[x];
+                        x += 2;
+                    }
+                    else
+                    {
+                        Console.WriteLine(virusB);
+                        x += 2;
+                    }
                 else
-                    Console.WriteLine(virusB);
+                {
+                    if (LS[x] > cutoff)
+                    {
+
+                        NewLS.Add(LS[x]);
+                        NewBetas.Add(virusB);
+                        sumV += LS[x];
+                        x++;
+                    }
+                    else
+                    {
+                        Console.WriteLine(virusB);
+                        x += 2;
+                    }
+                }
             }
 
 
@@ -95,14 +118,15 @@ namespace HIV_MLMv1
                 for(int trial = 0; trial < mutations; trial++) { 
                 double targetmutation = rGen.Next(0, newSum);
                 double target = 0;
-                for (int i = 0; i < VBetas.Count; i++)
+                //This code works for the latent cell population model.
+                for (int i = 0; (i/2) < VBetas.Count; i+=2)
                 {
                     if (VirusState[i] <= targetmutation)
                         targetmutation -= VirusState[i];
                     //On else, this strain is chosen to mutate
                     else
                     {
-                        target = VBetas[i]; // Saving the beta of the originally mutated strain.
+                        target = VBetas[i/2]; // Saving the beta of the originally mutated strain.
                         //Remove virus which mutates, up to 'newVirusAmount'
                         if (newVirusAmount - VirusState[i] > 0)
                             newVirusAmount = VirusState[i];
@@ -119,7 +143,7 @@ namespace HIV_MLMv1
                         {
                              if (NewBetas[why] == target)
                                 {
-                                    NewLS[why + 2] += newVirusAmount;
+                                    NewLS[why*2 + 2] += newVirusAmount;
                                     newV = false;
                                     break;
                                 }
@@ -129,6 +153,7 @@ namespace HIV_MLMv1
                         if (newV)
                             {
                                 NewLS.Add(newVirusAmount);
+                                NewLS.Add(0);
                                 NewBetas.Add(target);
                             }
                         break;
