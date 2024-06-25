@@ -30,7 +30,7 @@ namespace HIV_MLMv1
 
         //Recommended to leave these parameters be.
         public static int time = 0;
-        public static int timeLimit = 100000; //int.MaxValue; //timeLimit does (technically) count the timelimit, since the time starts on round 0.
+        public static int timeLimit = 1000000; //int.MaxValue; //timeLimit does (technically) count the timelimit, since the time starts on round 0.
         public static Solver SolveSim = new Solver();
         public static StepperTypeCode UsedStepFunction = StepperTypeCode.RungeKutta4; // ODE step solver function type
 
@@ -81,8 +81,16 @@ namespace HIV_MLMv1
                     VirusLoads.Add(x.VirusState.Sum());
                     
                 }
+
+
+
                 int totalVirusLoad = (int)VirusLoads.Sum();
-                var NewInfections = Binomial.Sample(InfectProbability, totalVirusLoad);
+                var NewInfections = InfectProbability * totalVirusLoad;
+                if (NewInfections > 1)
+                    NewInfections = (int)Math.Round(NewInfections);
+                else if (RInt.NextDouble() < NewInfections)
+                    NewInfections = 1;
+
                 while (NewInfections > 0)
                 {
                     
@@ -91,13 +99,35 @@ namespace HIV_MLMv1
                     List<double> NextBetas = new List<double>();
                     // By weighted draw, determine which individual and what beta jumps to the next individual.
                     int targetIndv = RInt.Next(0, totalVirusLoad);
+                    double TI = (double)targetIndv;
                     int tracker = 0;
                     while (tracker < VirusLoads.Count)
                     {
-                        if(targetIndv < VirusLoads[tracker])
+                        //Weighted drawing of which individual to have infect
+                        if(TI < VirusLoads[tracker])
                         {
-
+                            TI -= VirusLoads[tracker];
                         }
+                        else
+                        {
+                            //Weighted drawing of which virus to use for infection
+                            int targetVir = RInt.Next(0, (int)VirusLoads[tracker]);
+                            double TV = (double)targetVir;
+                            int straincounter = 0;
+                            foreach(double strain in Population[tracker].VirusState)
+                            {
+                                if (TV < strain)
+                                {
+                                    TV -= strain;
+                                }
+                                else
+                                {
+                                    NextBetas.Add(Population[tracker].VBetas[straincounter]);
+                                }
+                                straincounter++;
+                            }
+                        }
+                        tracker++;
                     }
 
                     Population.Add(new Individual(time, nextID++, NextInfection, NextBetas));

@@ -15,7 +15,7 @@ namespace HIV_MLMv1
         public List<double> VirusBetas;
         
         public double virusGrowth;
-        int sourceBase = 20000;
+        const int sourceBase = 20000;
         public ODE(int type)
         {
             IntHist.Add(new List<double> { });
@@ -108,13 +108,13 @@ namespace HIV_MLMv1
                             double source = sourceBase;
                             const double KT = 1000000;
                             const double r = 0;
-                            const double d1 = 0.02;
+                            const double d1 = sourceBase/KT;
                             const double deltaI = 0.5;
                             const double k = 1;
                             const double a = 1.1;
                             const double deltaE = 0.1;
                             const double hE = 10000;
-                            const double eE = 1.1;
+                            const double eE = 1;
                             const double eI = 1/KT;
                             const double fraqL = 0.04;
                             const double activL = 0.05;

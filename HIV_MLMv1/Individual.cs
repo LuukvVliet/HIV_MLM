@@ -41,7 +41,7 @@ namespace HIV_MLMv1
         public bool ComputedOnce(double tcellCutoff, double mr, Random rGen, int VirusLimit, double NextBeta, double newVirusAmount, int VirusGrowth)
         {
             //If a viral strain has more than 10% of the virus amount with which it usually infects, go to the next population.
-            double cutoff = 0.99 * newVirusAmount;
+            double cutoff = 0.98 * newVirusAmount;
             //SumV is used to calculate probability distributions
             double sumV = 0;
             //Checks to see if the individual still has enough T cells to continue living: returns true if not.
