@@ -13,10 +13,13 @@ namespace HIV_MLMv1
     class Program
     {
         //Simulation parameters, feel free to change
-        public static double InfectProbability = 0.02;      //Infection probability of new individuals
+        public static double vir50 = 13938; //Check the amount of target cells actually present in 1 ml of blood
+        public static double virMax = 0.317;
+        public static double virHill = 1.02;
+
         public static double DeathProbability = 0;          //Base Deathrate of Individuals
-        public static double MutationProbability = 0.05;    //Mutation chance of virus; should be scaled to amount of virus
-        public static double MutationBinDistance = 0.0001;    //The limit of how much a mutation can increase or decrease the beta parameter 
+        public static double MutationProbability = 0.00001;    //Mutation chance of virus; should be scaled to amount of virus
+        public static double MutationBinDistance = 0.00001;    //The limit of how much a mutation can increase or decrease the beta parameter 
                                                             //NOTE: Increase and decrease of beta is done by a "normal" distribution (or an approximation) so getting the limit is highly unlikely. (as a matter of fact, it is one in ten thousand)
         public static double TCellCutoff = 100;             //At what threshold does an individual not have enough T cells to live anymore?
         public static int N = 100;                          //Starting amount of infected individuals.
@@ -85,7 +88,7 @@ namespace HIV_MLMv1
 
 
                 int totalVirusLoad = (int)VirusLoads.Sum();
-                var NewInfections = InfectProbability * totalVirusLoad;
+                double NewInfections = totalVirusLoad;
                 if (NewInfections > 1)
                     NewInfections = (int)Math.Round(NewInfections);
                 else if (RInt.NextDouble() < NewInfections)

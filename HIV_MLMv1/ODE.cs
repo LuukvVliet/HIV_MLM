@@ -10,15 +10,12 @@ namespace HIV_MLMv1
     class ODE
     {
         public LambdaOde VirusDynamics;
-        public List<StateType> History = new List<StateType>();
-        public List<List<double>> IntHist = new List<List<double>>();
         public List<double> VirusBetas;
         
         public double virusGrowth;
         const int sourceBase = 20000;
         public ODE(int type)
         {
-            IntHist.Add(new List<double> { });
             virusGrowth = 0;
             switch (type)
             {
@@ -96,9 +93,6 @@ namespace HIV_MLMv1
 
                         OdeObserver = (x, t) =>
                         {
-                            if(x.Count >2)
-                                IntHist[0].Add(x[2]);
-                        
                         },
                         OdeSystem = (x, dxdt, t) =>
                         {

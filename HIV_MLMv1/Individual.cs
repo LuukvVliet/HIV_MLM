@@ -22,6 +22,7 @@ namespace HIV_MLMv1
         public List<double> VirusState { get; set; }
         public List<double> VBetas { get; set; }
         public List<List<double>> StateHistory { get; set; }
+        public List<List<double>> BetasHistory { get; set; }
 
         public Individual(int tiem, int id, StateType Init, List<double> VB) 
         {
@@ -47,6 +48,7 @@ namespace HIV_MLMv1
             //Checks to see if the individual still has enough T cells to continue living: returns true if not.
             StateType LS = InternalState;
             StateHistory.Add(LS.ToList());
+            BetasHistory.Add(VBetas);
             if (LS[0] <= tcellCutoff)
                 return true;
             

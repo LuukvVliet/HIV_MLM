@@ -21,19 +21,22 @@ namespace HIV_MLMv1
 
         static void Main(string[] args)
         {
+            const double jump = 0.0000025;
+            const double startbeta = 0.00000400005;
+
+            List<double> seenbetas = new List<double>();
+            List<List<double>> trials = new List<List<double>>();
+            
             int timelimit = 20000;
 
             Solver SolveTest = new Solver();
 
             SolveTest.StepperCode = StepperTypeCode.RungeKutta4;
-            string DirOut = "";
-           
+            string DirOut = "C:\\Users\\lukxi\\source\\repos\\HIV_MLMv1\\ToBeIgnored\\";
 
             List<string> cond_threshold = new List<string>();
-
-            for (int threshold = 20000; threshold <= 20000; threshold += 1000)
+            for (int threshold = 10000; threshold <= 20000; threshold += 1000)
             {
-                DirOut = "C:\\Users\\lukxi\\source\\repos\\HIV_MLMv1\\ToBeIgnored\\";
                 cond_threshold.Add(threshold.ToString());
                 StringBuilder build = new StringBuilder();
                 for (int testrun = 0; testrun < 50; testrun++)
@@ -42,7 +45,7 @@ namespace HIV_MLMv1
                     Random x = new Random();
                     ODE testODE = new ODE(3);
                     List<double> VirusBetas = new List<double> {
-                    0.00000400005
+                        startbeta
                  };
                     StateType StartingInfected = new StateType { 1000000, 1, 25, 0 };
                     Individual test = new Individual(0, -1, StartingInfected, VirusBetas);
@@ -54,28 +57,68 @@ namespace HIV_MLMv1
                         test.InternalState = testODE.VirusDynamics.InitialConditions;                           //Retrieve the now solved internals
 
                         //Triggers if individual goes extinct
-                        if (test.ComputedOnce(threshold, 0.00001, x, 0.000004, 25, testODE.GetVirusGrowth()))
+                        if (test.ComputedOnce(threshold, 0.00001, x, jump, 25, testODE.GetVirusGrowth()))
                         {
-                            build.Append(t.ToString());
-                            build.AppendLine(",");
+                          //  build.Append(t.ToString());
+                          //  build.AppendLine(",");
                             break;
                         }
                         else if (t == 19999)
                         {
-                            build.Append(t.ToString());
-                            build.AppendLine(",");
+                           // build.Append(t.ToString());
+                           // build.AppendLine(",");
                             break;
+                        }
+                        if(t%100 == 0)
+                        { 
+                            int paus = 1; 
                         }
                         t++;
                     }
+                    if (true)
+                    {
+                        trials.Add(new List<double>());
+                        for(int timepoint = 0; timepoint < t; t++)
+                        {
+                            trials[0].Add(test.StateHistory[timepoint][0]);
+                            trials[1].Add(test.StateHistory[timepoint][1]);
+                            trials[2].Add(test.StateHistory[timepoint].Skip(2).Sum());
+                            for(int virusstrain = 0; virusstrain < test.BetasHistory[timepoint].Count; virusstrain++)
+                            {
+                                int xLoc = (int)((test.BetasHistory[timepoint][virusstrain] - startbeta + 4*jump) / jump); // 4 * jump to determine the location in the table. If one adds more columns to the left, add 1 to this 4 for each column to prevent overlapping.
+
+                                //if(trials.Count < )
+                            }
+                        }
+                    }
                 }
-                DirOut += "Threshold" + threshold.ToString() +".txt";
                 build = build.Remove(build.Length - 3, 3);
-                using (StreamWriter fs = new StreamWriter(DirOut))
+                using (StreamWriter fs = new StreamWriter(DirOut + "Threshold" + threshold.ToString() + ".txt"))
                 {
                     fs.Write(build);
                 }
             }
+            StreamWriter final = new StreamWriter(DirOut + "Summary.txt");
+           /* final.WriteLine("Threshold Mean STD");
+            final.Flush();
+            string print = "";
+            for(int x = 1000; x <= 20000; x+= 1000)
+            {
+                StreamReader aa = new StreamReader(DirOut+ "Threshold" + x.ToString() + ".txt");
+                string input = aa.ReadToEnd();
+                string[] values = input.Split(',');
+                int[] v = values.Select(int.Parse).ToArray();
+                double mean = v.Sum() / v.Length;
+                double variance = v.Select(x => Math.Pow(((double)x - mean), 2)).Sum() / v.Length;
+                double STD = Math.Sqrt(variance);
+
+                final.WriteLine(x.ToString() + " " + mean.ToString() + " " + STD.ToString());
+                final.Flush();
+            }*/
+
+            
+            
+
             /*for (int testrun = 0; testrun < 100; testrun++)
             {
                
