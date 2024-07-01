@@ -32,6 +32,7 @@ namespace HIV_MLMv1
             VBetas = VB;
             VirusState = Init.Skip(2).ToList();
             StateHistory = new List<List<double>>();
+            BetasHistory = new List<List<double>>();
         }
         
 
