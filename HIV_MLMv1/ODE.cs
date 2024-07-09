@@ -9,13 +9,16 @@ namespace HIV_MLMv1
 {
     class ODE
     {
+        //betasVector is the list of possible betas; betas Number is the position in the betasVector list which the species is located in.
+        public List<double> betasVector;
         public LambdaOde VirusDynamics;
-        public List<double> VirusBetas;
+        public List<int> betasNumber;
         
         public double virusGrowth;
         const int sourceBase = 20000;
-        public ODE(int type)
+        public ODE(int type, List<double> betas)
         {
+            betasVector = betas;
             virusGrowth = 0;
             switch (type)
             {
@@ -44,10 +47,10 @@ namespace HIV_MLMv1
                             // T cells are dxdt[0], Effector cells are dxdt[1], rest is Virus cells.
                             //Getting virus state from virusdistribution and putting it back in virusdistribution over and over is done to prevent n^2 time problems
                             int c = 2;
-                            foreach (double beta in VirusBetas)
+                            foreach (int beta in betasNumber)
                             {
                                 sum += x[c];
-                                double netGrowth = beta * x[0] * x[c];
+                                double netGrowth = betasVector[beta] * x[0] * x[c];
                                 virusGrowth += netGrowth;
 
                                 PerCapitaDeathToTCells += beta * x[c];
@@ -81,8 +84,8 @@ namespace HIV_MLMv1
                             const double d2 = 0.1;
                             const double h2 = 10000;
                             //   r * x[0] - d1 * x[0] - r * x[0] * (x[0] + x[2]) / h1 - VirusBetas[0] * x[0] * x[2]; // T cells
-                            dxdt[0] = x[0] * (r - r * (x[0] + x[2]) / h1 - d1 - VirusBetas[0] * x[2]);
-                            dxdt[2] = VirusBetas[0] * x[0] * x[2] - delta * x[1] * x[2]; // Infected cells
+                            dxdt[0] = x[0] * (r - r * (x[0] + x[2]) / h1 - d1 - betasNumber[0] * x[2]);
+                            dxdt[2] = betasNumber[0] * x[0] * x[2] - delta * x[1] * x[2]; // Infected cells
                             dxdt[1] = (a * x[1] * x[2]) / (h2 + x[1] + x[2]) - d2 * x[1];  // Effector cells
                         }
                     };
@@ -119,10 +122,10 @@ namespace HIV_MLMv1
                             // T cells are dxdt[0], Effector cells are dxdt[1], rest is Virus cells.
                             //Getting virus state from virusdistribution and putting it back in virusdistribution over and over is done to prevent n^2 time problems
                             int c = 2;
-                            foreach (double beta in VirusBetas)
+                            foreach (int beta in betasNumber)
                             {
                                 
-                                double netGrowth = beta * x[0] * x[c]/(1+eI*x[0]+eI*x[c]);
+                                double netGrowth = betasVector[beta] * x[0] * x[c]/(1+eI*x[0]+eI*x[c]);
                                 double netEffectorDeath = x[1] * x[c] / (hE + eE * x[1] + eE * x[c]);
                                 effectorGrowth += a*netEffectorDeath;
                                 thisVirusGrowth += netGrowth;
@@ -143,10 +146,10 @@ namespace HIV_MLMv1
             }
             
         }
-        public void SetInit(StateType x, List<double> betas)
+        public void SetInit(StateType x, List<int> betas)
         {
             VirusDynamics.InitialConditions = x;
-            VirusBetas = betas;
+            betasNumber = betas;
             virusGrowth = 0;
         }
         //Function used to get the Virus growth over the last period. Resets virus growth back to 0.
