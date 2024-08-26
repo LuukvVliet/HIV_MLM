@@ -108,12 +108,8 @@ namespace HIV_MLMv1
                 mutations = (int)Math.Round(expectedMut);
             else if (rGen.NextDouble() < expectedMut)
                 mutations = 1;
-            //THIS one line of code is by far the most time consuming:
-            //Mutations using a binomial distribution
-           /* if (BinomialDatabase != null)
-                sample = BinomialDatabase[VirusGrowth / 50].Sample();
-            else sample = Binomial.Sample(mr, VirusGrowth);
-           */
+            
+
             this.VirusState = LS.Skip(2).ToList();
             if (IntBetas.Count < VirusLimit)
             {
@@ -169,10 +165,9 @@ namespace HIV_MLMv1
                 
                 }
             }
-
             InternalState = NewLS;
             IntBetas = NewBetas;
-
+            VirusState = NewLS.Skip(2).ToList();
             return false;
         }
         public double NewInfection(Random rGen)

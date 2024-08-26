@@ -118,15 +118,21 @@ namespace HIV_MLMv1
 
                             double effectorGrowth = 0;
                             double thisVirusGrowth = 0;
-
+                            double virusLoad = 0;
+                            double virusxbeta = 0;
+                            for (int i = 2; i < x.Count; i+=2)
+                                {
+                                    virusLoad += x[i];
+                                    virusxbeta += x[i] * betasVector[betasNumber[(i/2-1)]];
+                                }
                             // T cells are dxdt[0], Effector cells are dxdt[1], rest is Virus cells.
                             //Getting virus state from virusdistribution and putting it back in virusdistribution over and over is done to prevent n^2 time problems
                             int c = 2;
                             foreach (int beta in betasNumber)
                             {
                                 
-                                double netGrowth = betasVector[beta] * x[0] * x[c]/(1+eI*x[0]+eI*x[c]);
-                                double netEffectorDeath = x[1] * x[c] / (hE + eE * x[1] + eE * x[c]);
+                                double netGrowth = betasVector[beta] * x[0] * x[c]/(1+eI*x[0]+eI*virusLoad);
+                                double netEffectorDeath = x[1] * x[c] / (hE + eE * x[1] + eE * virusLoad);
                                 effectorGrowth += a*netEffectorDeath;
                                 thisVirusGrowth += netGrowth;
                                 
