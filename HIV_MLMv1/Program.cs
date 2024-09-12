@@ -1,12 +1,8 @@
-﻿using System;
+﻿using OdeLibrary;
+using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using OdeLibrary;
 using System.IO;
-using System.Globalization;
-using MathNet.Numerics.Distributions;
+using System.Linq;
 
 namespace HIV_MLMv1
 {
@@ -19,15 +15,15 @@ namespace HIV_MLMv1
         public static List<double> betasVector = new List<double>();
 
         public static double DeathProbability = 0.000075;          //Base Deathrate of Individuals
-        public static double MutationProbability = 0.000001;    //Mutation chance of virus; should be scaled to amount of virus
+        public static double MutationProbability = 0.000005;    //Mutation chance of virus; should be scaled to amount of virus
 
         public static double TCellCutoff = 10000;             //At what threshold does an individual not have enough T cells to live anymore?
         public static int N = 20;                          //Starting amount of infected individuals.
-        public static double IcellStart = 25;               //Starting amount of infected cells on new mutation. SHOULD BE equal to or higher than VirusAmountOnMutate due to cutoff calculation.
+        public static double IcellStart = 50;               //Starting amount of infected cells on new mutation. SHOULD BE equal to or higher than VirusAmountOnMutate due to cutoff calculation.
 
-        public static int VirusAmountOnMutate = 25;         //How many infected cells 'transfer' between two strains when one mutates?
+        public static int VirusAmountOnMutate = 50;         //How many infected cells 'transfer' between two strains when one mutates?
 
-        public static StateType StartingInfected = new StateType { 1000000, 5, 25, 0 }; //State of the first 5 infected individuals
+        public static StateType StartingInfected = new StateType { 1000000, 5, 50, 0 }; //State of the first 5 infected individuals
 
 
         //Recommended to leave these parameters be.
@@ -41,16 +37,21 @@ namespace HIV_MLMv1
             //Read the outputdirectory
             string DirOut = "C:\\Users\\lukxi\\source\\repos\\HIV_MLMv1\\ToBeIgnored\\TestRunSim";
 
-           //How many replicates do we run?
-            for (int trials = 1; trials <= 20; trials++) {
+            //How many replicates do we run?
+            for (int trials = 1; trials <= 20; trials++)
+            {
                 time = 0;
                 int nextID = 0; // ID tracking
                                 //Initialize the population with a few infected individuals
                 List<Individual> Population = new List<Individual> { };
-                List<Tuple<Individual, string>> Graveyard = new List<Tuple<Individual, string>> { };
+                List<double> Graveyard = new List<double> { 0, 0, 0, 0 };
+                // GRAVEYARD FORMAT //
+                // Deaths by T-Cell depletion
+                // Deaths by chance
+                // Average lifespan up till now
 
-                for (int b = -2; b < 48; b++)
-                    betasVector.Add(0.000004 * Math.Pow(1.07, b));
+                for (int b = -2; b < 68; b++)
+                    betasVector.Add(0.000004 * Math.Pow(1.05, b));
 
                 for (int i = 0; i < N; i++)
                 {
@@ -66,110 +67,140 @@ namespace HIV_MLMv1
                 // Simulation loop
                 Random RInt = new Random();
                 SolveSim.StepperCode = UsedStepFunction;
-                while (time < timeLimit || !(Population.Count == 0))
+                using (StreamWriter fs = new StreamWriter(DirOut + "\\replicate_" + trials + ".txt"))
                 {
-                    List<double> VirusLoads = new List<double>();
-                    List<Individual> NextPopulation = new List<Individual> { };
-                    foreach (Individual x in Population)
+                    while (time < timeLimit || !(Population.Count == 0))
                     {
-                        Sim.SetInit(x.InternalState, x.IntBetas);         //Set the internals for the ODE
-                        SolveSim.Solve(Sim.VirusDynamics, 0, 1, 0.05); //Solve the ODE system for one timestep
-                        x.InternalState = Sim.VirusDynamics.InitialConditions; //Set the individual to the new internal state.
-
-
-                        //If something doesnt die, add it to the next population
-                        if (RInt.NextDouble() > DeathProbability) NextPopulation.Add(x);
-                        else { Graveyard.Add(new Tuple<Individual, string>(x, "Natural death")); continue; }
-                        //After something is computed once, see if it mutates or if a virus is outcompeted.
-                        if (x.ComputedOnce(TCellCutoff, MutationProbability, RInt, VirusAmountOnMutate, Sim.GetVirusGrowth()))
-                        { Graveyard.Add(new Tuple<Individual, string>(x, "T-cell depletion")); continue; }
-
-                        //New infection using distribution samples
-                        VirusLoads.Add(x.VirusState.Sum());
-
-                    }
-
-                    int totalVirusLoad = (int)VirusLoads.Sum();
-                    double NewInfections = 0;
-                    foreach (double vprob in VirusLoads) {
-
-                       NewInfections+=CalcVirulence(vprob); 
-                    }
-
-                    if (NewInfections >= 1)
-                        NewInfections = (int)Math.Round(NewInfections);
-                    else if (RInt.NextDouble() < NewInfections)
-                        NewInfections = 1;
-                    else
-                        NewInfections = 0;
-
-                    while (NewInfections > 0)
-                    {
-
-                        //These are the states of the next infection
-                        StateType NextInfection = new StateType { StartingInfected[0], StartingInfected[1], IcellStart, 0 };
-                        List<int> NextBetas = new List<int>();
-                        // By weighted draw, determine which individual and what beta jumps to the next individual.
-                        int targetIndv = RInt.Next(0, totalVirusLoad);
-                        double TI = (double)targetIndv;
-                        int tracker = 0;
-                        while (tracker < VirusLoads.Count)
+                        //Virusloads is the list containing every individual's viral load.
+                        List<double> VirusLoads = new List<double>();
+                        List<Individual> NextPopulation = new List<Individual> { };
+                        foreach (Individual x in Population)
                         {
-                            //Weighted drawing of which individual to have infect
-                            if (TI < VirusLoads[tracker])
+                            Sim.SetInit(x.InternalState, x.IntBetas);         //Set the internals for the ODE
+                                                                              //Console.WriteLine(x.InternalState.Count);
+
+                            SolveSim.Solve(Sim.VirusDynamics, 0, 1, 0.05); //Solve the ODE system for one timestep
+                            x.InternalState = Sim.VirusDynamics.InitialConditions; //Set the individual to the new internal state.
+
+                            //After something is computed once, see if it mutates or if a virus is outcompeted.
+                            if (x.ComputedOnce(TCellCutoff, MutationProbability, RInt, VirusAmountOnMutate, Sim.GetVirusGrowth()))
+                            { Graveyard[0]++; Graveyard[2] = (Graveyard[2] * (Graveyard[0] + Graveyard[1]-1) + time - x.externalTime) / Graveyard[0] + Graveyard[1]; }
+
+                            //If something doesnt die, add it to the next population
+                            else if (RInt.NextDouble() > DeathProbability) NextPopulation.Add(x);
+                            else { Graveyard[1]++; Graveyard[2] = (Graveyard[2] * (Graveyard[0] + Graveyard[1]-1) + time - x.externalTime) / (Graveyard[0] + Graveyard[1]); }
+
+                            //New infection using distribution samples
+                            double tempvload = 0;
+                            for (int temp = 0; temp < x.VirusState.Count; temp += 2)
+                                tempvload += x.VirusState[temp];
+                            VirusLoads.Add(tempvload);
+
+                        }
+
+
+
+                        int totalVirusLoad = (int)VirusLoads.Sum();
+                        double NewInfections = 0;
+                        foreach (double vprob in VirusLoads)
+                        {
+
+                            NewInfections += CalcVirulence(vprob);
+                        }
+
+                        if (NewInfections >= 1)
+                            NewInfections = (int)Math.Round(NewInfections);
+                        else if (RInt.NextDouble() < NewInfections)
+                            NewInfections = 1;
+                        else
+                            NewInfections = 0;
+
+                        //LIMIT FOR POPULATION SIZE
+                        if (Population.Count >= 2500)
+                            NewInfections = 0;
+
+                        while (NewInfections > 0)
+                        {
+
+                            //These are the states of the next infection
+                            StateType NextInfection = new StateType { StartingInfected[0], StartingInfected[1], IcellStart, 0 };
+                            List<int> NextBetas = new List<int>();
+                            // By weighted draw, determine which individual and what beta jumps to the next individual.
+                            int targetIndv = RInt.Next(0, totalVirusLoad);
+                            double TI = (double)targetIndv;
+                            int tracker = 0;
+                            while (tracker < Population.Count)
                             {
-                                TI -= VirusLoads[tracker];
-                            }
-                            else
-                            {
-                                //Weighted drawing of which virus to use for infection
-                                int targetVir = RInt.Next(0, totalVirusLoad+1);
-                                double TV = (double)targetVir;
-                                int straincounter = 0;
-                                foreach (double strain in Population[tracker].VirusState)
+                                //Weighted drawing of which individual to have infect
+                                if (TI > VirusLoads[tracker])
                                 {
-                                    if(straincounter %2 == 1) { } //litte bit of a stinky hack, this prevents the straincounter to measure every other input; every other input is the latent population of the state
-
-                                    else if (TV < strain)
-                                    {
-                                        TV -= strain;
-                                    }
-                                    else
-                                    {
-                                        NextBetas.Add(Population[tracker].IntBetas[straincounter]);
-                                    }
-                                    straincounter++;
+                                    TI -= VirusLoads[tracker];
                                 }
-                            }
-                            tracker++;
-                        }
+                                else
+                                {
+                                    //Weighted drawing of which virus to use for infection
+                                    int targetVir = RInt.Next(0, (int)VirusLoads[tracker]);
+                                    double TV = (double)targetVir - 1;
+                                    int straincounter = 0;
 
-                        NextPopulation.Add(new Individual(time, nextID++, NextInfection, NextBetas));
-                        NewInfections--;
-                    };
-                    time++;
-                    Population = NextPopulation;
-                    if (time % 1000 == 0 && time != 0)
-                    {
-                        using (StreamWriter fs = new StreamWriter(DirOut + "\\replicate_"+trials))
+
+
+                                    foreach (double strain in Population[tracker].VirusState)
+                                    {
+                                        if (straincounter % 2 == 1) { } //litte bit of a stinky hack, this prevents the straincounter to measure every other input; every other input is the latent population of the state
+
+                                        else if (TV > strain)
+                                        {
+                                            TV -= strain;
+                                        }
+                                        else
+                                        {
+                                            NextBetas.Add(Population[tracker].IntBetas[straincounter / 2]);
+
+                                            break;
+                                        }
+                                        straincounter++;
+                                    }
+                                    break;
+                                }
+                                tracker++;
+                            }
+                            //Population and Virusloads are not always equal in length
+                            NextPopulation.Add(new Individual(time, nextID++, NextInfection, NextBetas));
+                            NewInfections--;
+                        };
+
+
+                        if (time % 10 == 0 && time != 0)
                         {
-                            foreach (Tuple<Individual, string> ind in Graveyard)
+                            int cnt = 0; int avgBeta = 0;
+                            foreach (Individual alive in Population)
                             {
-                            
+                                cnt += alive.IntBetas.Count;
+                                avgBeta += alive.IntBetas.Sum() / alive.IntBetas.Count;
                             }
-                        }
-                    }
-                }
-                int FINISH = 0;
-            }
+                            double cnt2 = (double)cnt / (double)Population.Count;
+                            double avgBeta2 = (double)avgBeta / (double)Population.Count;
+                            Console.WriteLine(cnt2 + " / " + avgBeta2);
 
+                            fs.WriteLine(time + " " + Population.Count + " " + cnt2 + " " + avgBeta2 + " " + Graveyard[0] + " " + Graveyard[1] + " " + Graveyard[2]);
+
+
+
+                        }
+                        time++;
+                        Population = NextPopulation;
+                    }
+                    int FINISH = 0;
+                }
+            }
             // ADD post-processing of lists
             // Print to .csv type file for further analysis of model function.
         }
     
     public static double CalcVirulence(double V)
     {
-        double result = 0;
+        double result;
 
             V = V * 100; // Modifier for translating virus particles to infective cells 
             result = virMax * Math.Pow(V, virHill) / (Math.Pow(V, virHill) + Math.Pow(vir50, virHill));
