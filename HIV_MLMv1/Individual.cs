@@ -18,6 +18,7 @@ namespace HIV_MLMv1
     {
         public int ID { get; set; }
         public int externalTime { get; set; }
+        public int DeathTimer { get; set; }
         public StateType InternalState { get; set; }
         public List<double> VirusState { get; set; }
         public List<int> IntBetas { get; set; }
@@ -49,15 +50,18 @@ namespace HIV_MLMv1
             //Checks to see if the individual still has enough T cells to continue living: returns true if not.
             StateType LS = InternalState;
 
-            /*
-            List<double> temp111 = LS.ToList();
-            temp111.TrimExcess();
-            LS = temp111;*/
-            
+            // This piece of code keeps history of what happens in the individual; causes OutOfMemory errors by causing insane lengths of lists.
             StateHistory.Add(LS.ToList());
             BetasHistory.Add(IntBetas);
+            /* */
             if (LS[0] <= tcellCutoff)
-                return true;
+            {
+                DeathTimer++;
+                if(DeathTimer > 20)
+                    return true;
+            }
+            else
+                DeathTimer = 0;
             
             
 

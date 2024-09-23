@@ -19,16 +19,15 @@ namespace HIV_MLMv1
 
         public static double TCellCutoff = 10000;             //At what threshold does an individual not have enough T cells to live anymore?
         public static int N = 20;                          //Starting amount of infected individuals.
-        public static double IcellStart = 50;               //Starting amount of infected cells on new mutation. SHOULD BE equal to or higher than VirusAmountOnMutate due to cutoff calculation.
+        public static double IcellStart = 25;               //Starting amount of infected cells on new mutation. SHOULD BE equal to or higher than VirusAmountOnMutate due to cutoff calculation.
 
-        public static int VirusAmountOnMutate = 50;         //How many infected cells 'transfer' between two strains when one mutates?
+        public static int VirusAmountOnMutate = 25;         //How many infected cells 'transfer' between two strains when one mutates?
 
-        public static StateType StartingInfected = new StateType { 1000000, 5, 50, 0 }; //State of the first 5 infected individuals
 
 
         //Recommended to leave these parameters be.
         public static int time = 0;
-        public static int timeLimit = 1000000; 
+        public static int timeLimit = 100000; 
         public static Solver SolveSim = new Solver();
         public static StepperTypeCode UsedStepFunction = StepperTypeCode.RungeKutta4; // ODE step solver function type
 
@@ -44,17 +43,18 @@ namespace HIV_MLMv1
                 int nextID = 0; // ID tracking
                                 //Initialize the population with a few infected individuals
                 List<Individual> Population = new List<Individual> { };
-                List<double> Graveyard = new List<double> { 0, 0, 0, 0 };
+                List<double> Graveyard = new List<double> { 0, 0, 0, 0, 0 };
                 // GRAVEYARD FORMAT //
                 // Deaths by T-Cell depletion
                 // Deaths by chance
                 // Average lifespan up till now
 
-                for (int b = -2; b < 68; b++)
-                    betasVector.Add(0.000004 * Math.Pow(1.05, b));
+                for (int b = -2; b < 78; b++)
+                    betasVector.Add(0.000004 * Math.Pow(1.01, b));
 
                 for (int i = 0; i < N; i++)
                 {
+                    StateType StartingInfected = new StateType { 1000000, 1, 25, 0 };
                     List<int> StartVBetas = new List<int>();
                     StartVBetas.Add(2);
                     Population.Add(new Individual(time, nextID, StartingInfected, StartVBetas));
@@ -69,6 +69,9 @@ namespace HIV_MLMv1
                 SolveSim.StepperCode = UsedStepFunction;
                 using (StreamWriter fs = new StreamWriter(DirOut + "\\replicate_" + trials + ".txt"))
                 {
+                    fs.WriteLine("#HEADER: FraqLatent: " + Sim.FractieLatent + " Activatie: " + Sim.FractieActivatie + " mr: " + MutationProbability + " ");
+                    fs.WriteLine("Time PopulationCount AvgAmountOfBetas AvgBeta TotalDeath EvoDeath NaturalDeath");
+
                     while (time < timeLimit || !(Population.Count == 0))
                     {
                         //Virusloads is the list containing every individual's viral load.
@@ -79,12 +82,17 @@ namespace HIV_MLMv1
                             Sim.SetInit(x.InternalState, x.IntBetas);         //Set the internals for the ODE
                                                                               //Console.WriteLine(x.InternalState.Count);
 
-                            SolveSim.Solve(Sim.VirusDynamics, 0, 1, 0.05); //Solve the ODE system for one timestep
+                            SolveSim.Solve(Sim.VirusDynamics, 0, 0.05, 1, IntegrateFunctionTypeCode.Adaptive); //Solve the ODE system for one timestep
                             x.InternalState = Sim.VirusDynamics.InitialConditions; //Set the individual to the new internal state.
 
                             //After something is computed once, see if it mutates or if a virus is outcompeted.
                             if (x.ComputedOnce(TCellCutoff, MutationProbability, RInt, VirusAmountOnMutate, Sim.GetVirusGrowth()))
-                            { Graveyard[0]++; Graveyard[2] = (Graveyard[2] * (Graveyard[0] + Graveyard[1]-1) + time - x.externalTime) / Graveyard[0] + Graveyard[1]; }
+                            { 
+                                Graveyard[0]++; 
+                                Graveyard[2] = (Graveyard[2] * (Graveyard[0] + Graveyard[1]-1) + time - x.externalTime) / (Graveyard[0] + Graveyard[1]);
+
+                                if (x.IntBetas.Count > 3) Graveyard[4]++; else Graveyard[3]++;
+                            }
 
                             //If something doesnt die, add it to the next population
                             else if (RInt.NextDouble() > DeathProbability) NextPopulation.Add(x);
@@ -116,14 +124,14 @@ namespace HIV_MLMv1
                             NewInfections = 0;
 
                         //LIMIT FOR POPULATION SIZE
-                        if (Population.Count >= 2500)
+                        if (Population.Count >= 1000)
                             NewInfections = 0;
 
                         while (NewInfections > 0)
                         {
 
                             //These are the states of the next infection
-                            StateType NextInfection = new StateType { StartingInfected[0], StartingInfected[1], IcellStart, 0 };
+                            StateType NextInfection = new StateType { 1000000, 1, IcellStart, 0 };
                             List<int> NextBetas = new List<int>();
                             // By weighted draw, determine which individual and what beta jumps to the next individual.
                             int targetIndv = RInt.Next(0, totalVirusLoad);

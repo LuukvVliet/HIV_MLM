@@ -23,14 +23,14 @@ namespace HIV_MLMv1
         {
 
             List<double> betasList = new List<double>();
-            const int startbeta = 2;
-            const double mr = 0.000001;
+            const int startbeta = 22;
+            const double mr = 0.000005;
 
-            for(int counters = -2; counters <48; counters++)
-                betasList.Add(0.000004005 * Math.Pow(1.06, counters));
+            for(int counters = -2; counters <78; counters++)
+                betasList.Add(0.000004 * Math.Pow(1.05, counters));
             
             
-            int timelimit = 20000;
+            int timelimit = 50000;
 
             Solver SolveTest = new Solver();
 
@@ -38,11 +38,11 @@ namespace HIV_MLMv1
             string DirOut = "C:\\Users\\lukxi\\source\\repos\\HIV_MLMv1\\ToBeIgnored\\InternalTraj_expjump\\";
 
             StringBuilder metaFile = new StringBuilder();
-           // List<
+            // List<
 
             for (int threshold = 10000; threshold <= 10000; threshold += 1000)
             {
-                for (int testrun = 0; testrun < 20; testrun++)
+                for (int testrun = 0; testrun < 100; testrun++)
                 {
                     List<List<double>> trials = new List<List<double>>();
                     List<double> seenbetas = new List<double>();
@@ -56,84 +56,89 @@ namespace HIV_MLMv1
                  };
                     StateType StartingInfected = new StateType { 1000000, 1, 25, 0 };
                     Individual test = new Individual(0, -1, StartingInfected, VirusBetas);
-                    while (t < timelimit)
+                    using (StreamWriter fs = new StreamWriter(DirOut + "testdoc_" + testrun + ".txt"))
                     {
+                        while (t < timelimit)
+                        {
 
-                        testODE.SetInit(test.InternalState, test.IntBetas);                                       //Set the internals for the ODE
-                        SolveTest.Solve(testODE.VirusDynamics, 0, 0.05, 1, IntegrateFunctionTypeCode.Adaptive); //Solve the ODE system for one timestep
-                        test.InternalState = testODE.VirusDynamics.InitialConditions;                           //Retrieve the now solved internals
-                        
-                        //Triggers if individual goes extinct
-                        if (test.ComputedOnce(threshold, mr , x, 25, testODE.GetVirusGrowth()))
-                        {
-                          //  build.Append(t.ToString());
-                          //  build.AppendLine(",");
-                            break;
-                        }
-                        
-                        if(t%100 == 0)
-                        { 
-                            int paus = 1; 
-                        }
-                        t++;
-                    }
-                    if (true)
-                    {
+                            testODE.SetInit(test.InternalState, test.IntBetas);                                       //Set the internals for the ODE
+                            SolveTest.Solve(testODE.VirusDynamics, 0, 0.05, 1, IntegrateFunctionTypeCode.Adaptive); //Solve the ODE system for one timestep
+                            test.InternalState = testODE.VirusDynamics.InitialConditions;                           //Retrieve the now solved internals
 
-                        trials.Add(new List<double>()); trials.Add(new List<double>()); trials.Add(new List<double>()); //Adding the first 3 columns
-                        foreach (double b in betasList)  //Adding the other columns
-                        {
-                            List<double> vlist = new List<double>();
-                            vlist.AddRange(Enumerable.Repeat(0.0, t));
-                            trials.Add(vlist);
-                        }
-                        for (int timepoint = 0; timepoint < t; timepoint++)
-                        {
-                            trials[0].Add(test.StateHistory[timepoint][0]);
-                            trials[1].Add(test.StateHistory[timepoint][1]);
-                            trials[2].Add(test.StateHistory[timepoint].Skip(2).Where((k,i) => i%2 == 0).Sum());
-                            for (int virusstrain = 0; virusstrain < test.BetasHistory[timepoint].Count; virusstrain++)
+                            //Triggers if individual goes extinct
+                            if (test.ComputedOnce(threshold, mr, x, 25, testODE.GetVirusGrowth()))
                             {
-                                int xLoc = test.BetasHistory[timepoint][virusstrain]+3; 
-                                trials[xLoc][timepoint] = test.StateHistory[timepoint][2+2 * virusstrain];
+                                //  build.Append(t.ToString());
+                                //  build.AppendLine(",");
+                                if(test.IntBetas[0] < 50)
+                                {
+                                    int tssss = 0;
+                                }
+                                break;
                             }
-                        }
-                    }
-                    using (StreamWriter fs = new StreamWriter(DirOut + "Traj_" + testrun + ".txt"))
-                    {
-                        //Add metadata onto files
-                        fs.WriteLine("#Threshold:" + threshold.ToString() + "-mr:" + mr.ToString());
-                        fs.Flush();
 
-                        //Add columnnames
-                        StringBuilder build = new StringBuilder();
-                        build.Append("time T E I_tot");
-                        for (int col = 0; col < betasList.Count; col++)
-                        {
-                            build.Append(' ');
-                            build.Append("I_" + (betasList[col]).ToString());
-                        }
-                        fs.WriteLine(build);
-                        fs.Flush();
-
-                        //Write the file
-                        for (int row = 0; row < timelimit; row++)
-                        {
-                            build = new StringBuilder();
-                            build.Append(row.ToString() + ' ');
-                            foreach (List<double> column in trials)
+                            if (t % 100 == 0)
                             {
-                                /*for (int before = 0; before < row; before++)
-                                    build.Append("0 ");*/
-                                build.Append(column[row].ToString());
+                                int paus = 1;
+                            }
+                            t++;
+                        }
+                        if (false)
+                        {
+
+                            trials.Add(new List<double>()); trials.Add(new List<double>()); trials.Add(new List<double>()); //Adding the first 3 columns
+                            foreach (double b in betasList)  //Adding the other columns
+                            {
+                                List<double> vlist = new List<double>();
+                                vlist.AddRange(Enumerable.Repeat(0.0, t));
+                                trials.Add(vlist);
+                            }
+                            for (int timepoint = 0; timepoint < t; timepoint++)
+                            {
+                                trials[0].Add(test.StateHistory[timepoint][0]);
+                                trials[1].Add(test.StateHistory[timepoint][1]);
+                                trials[2].Add(test.StateHistory[timepoint].Skip(2).Where((k, i) => i % 2 == 0).Sum());
+                                for (int virusstrain = 0; virusstrain < test.BetasHistory[timepoint].Count; virusstrain++)
+                                {
+                                    int xLoc = test.BetasHistory[timepoint][virusstrain] + 3;
+                                    trials[xLoc][timepoint] = test.StateHistory[timepoint][2 + 2 * virusstrain];
+                                }
+                            }
+
+
+                            //Add metadata onto files
+                            fs.WriteLine("#Threshold:" + threshold.ToString() + "-mr:" + mr.ToString());
+                            fs.Flush();
+
+                            //Add columnnames
+                            StringBuilder build = new StringBuilder();
+                            build.Append("time T E I_tot");
+                            for (int col = 0; col < betasList.Count; col++)
+                            {
                                 build.Append(' ');
+                                build.Append("I_" + (betasList[col]).ToString());
                             }
-                            build = build.Remove(build.Length - 1, 1);
                             fs.WriteLine(build);
                             fs.Flush();
+
+                            //Write the file
+                            for (int row = 0; row < t; row++)
+                            {
+                                build = new StringBuilder();
+                                build.Append(row.ToString() + ' ');
+                                foreach (List<double> column in trials)
+                                {
+                                    /*for (int before = 0; before < row; before++)
+                                        build.Append("0 ");*/
+                                    build.Append(column[row].ToString());
+                                    build.Append(' ');
+                                }
+                                build = build.Remove(build.Length - 1, 1);
+                                fs.WriteLine(build);
+                                fs.Flush();
+                            }
                         }
                     }
-
                 }
             }
             /* 

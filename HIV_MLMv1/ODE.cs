@@ -16,6 +16,8 @@ namespace HIV_MLMv1
         
         public double virusGrowth;
         const int sourceBase = 20000;
+        public double FractieLatent = 0.04;
+        public double FractieActivatie = 0.05;
         public ODE(int type, List<double> betas)
         {
             betasVector = betas;
@@ -113,8 +115,8 @@ namespace HIV_MLMv1
                             const double hE = 10000;
                             const double eE = 1;
                             const double eI = 1/KT;
-                            const double fraqL = 0.04;
-                            const double activL = 0.05;
+                            double fraqL = FractieLatent;
+                            double activL = FractieActivatie;
 
                             double effectorGrowth = 0;
                             double thisVirusGrowth = 0;
