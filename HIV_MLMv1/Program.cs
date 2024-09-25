@@ -17,7 +17,7 @@ namespace HIV_MLMv1
         public static double DeathProbability = 0.000075;          //Base Deathrate of Individuals
         public static double MutationProbability = 0.000005;    //Mutation chance of virus; should be scaled to amount of virus
 
-        public static double TCellCutoff = 10000;             //At what threshold does an individual not have enough T cells to live anymore?
+        public static double TCellCutoff = 100000;             //At what threshold does an individual not have enough T cells to live anymore?
         public static int N = 20;                          //Starting amount of infected individuals.
         public static double IcellStart = 25;               //Starting amount of infected cells on new mutation. SHOULD BE equal to or higher than VirusAmountOnMutate due to cutoff calculation.
 
@@ -49,8 +49,8 @@ namespace HIV_MLMv1
                 // Deaths by chance
                 // Average lifespan up till now
 
-                for (int b = -2; b < 78; b++)
-                    betasVector.Add(0.000004 * Math.Pow(1.01, b));
+                for (int b = -2; b < 50; b++)
+                    betasVector.Add(0.000004 * Math.Pow(1.03, b));
 
                 for (int i = 0; i < N; i++)
                 {
@@ -72,7 +72,7 @@ namespace HIV_MLMv1
                     fs.WriteLine("#HEADER: FraqLatent: " + Sim.FractieLatent + " Activatie: " + Sim.FractieActivatie + " mr: " + MutationProbability + " ");
                     fs.WriteLine("Time PopulationCount AvgAmountOfBetas AvgBeta TotalDeath EvoDeath NaturalDeath");
 
-                    while (time < timeLimit || !(Population.Count == 0))
+                    while (time < timeLimit && !(Population.Count == 0))
                     {
                         //Virusloads is the list containing every individual's viral load.
                         List<double> VirusLoads = new List<double>();
@@ -90,8 +90,6 @@ namespace HIV_MLMv1
                             { 
                                 Graveyard[0]++; 
                                 Graveyard[2] = (Graveyard[2] * (Graveyard[0] + Graveyard[1]-1) + time - x.externalTime) / (Graveyard[0] + Graveyard[1]);
-
-                                if (x.IntBetas.Count > 3) Graveyard[4]++; else Graveyard[3]++;
                             }
 
                             //If something doesnt die, add it to the next population

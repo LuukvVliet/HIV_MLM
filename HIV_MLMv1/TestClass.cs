@@ -10,10 +10,6 @@ namespace HIV_MLMv1
 {
     class TestClass
     {
-        //Heuristic Observations:
-        // Somehow, there needs to be some capping method to the virus population. 
-        // The amount of strains run out of control, consuming insane amounts of processor power.
-
         //This piece of code generates a List of Lists, of which the first list is the used betas in the parameter sweep.
         //Each subsequent list then has the used Source as their first value
         //Each other value is either the lowest point of the viral load, -1 if the virus went extinct due to oscillatory behaviour 
@@ -23,11 +19,11 @@ namespace HIV_MLMv1
         {
 
             List<double> betasList = new List<double>();
-            const int startbeta = 22;
+            const int startbeta = 46;
             const double mr = 0.000005;
 
             for(int counters = -2; counters <78; counters++)
-                betasList.Add(0.000004 * Math.Pow(1.05, counters));
+                betasList.Add(0.000004 * Math.Pow(1.03, counters));
             
             
             int timelimit = 50000;
@@ -40,7 +36,7 @@ namespace HIV_MLMv1
             StringBuilder metaFile = new StringBuilder();
             // List<
 
-            for (int threshold = 10000; threshold <= 10000; threshold += 1000)
+            for (int threshold = 100000; threshold <= 100000; threshold += 10000)
             {
                 for (int testrun = 0; testrun < 100; testrun++)
                 {

@@ -16,9 +16,11 @@ namespace HIV_MLMv1
         // VECTOR MULTIPLICATION INSTEAD OF LOOPING OVER LIST
         // Aantal mutaties schaalt met de TOEVOER van virus, niet het totaal aantal virus
     {
+        
         public int ID { get; set; }
         public int externalTime { get; set; }
         public int DeathTimer { get; set; }
+        public List<double> MutDistribution { get; set; }
         public StateType InternalState { get; set; }
         public List<double> VirusState { get; set; }
         public List<int> IntBetas { get; set; }
@@ -34,6 +36,7 @@ namespace HIV_MLMv1
             VirusState = Init.Skip(2).ToList();
             StateHistory = new List<List<double>>();
             BetasHistory = new List<List<int>>();
+            MutDistribution = new List<double> {0.8, 0.15, 0.03, 0.015, 0.004, 0.00099, 0.00001};
         }
         
 
@@ -85,7 +88,6 @@ namespace HIV_MLMv1
                     }
                     else
                     {
-                        //Console.WriteLine(virusB);
                         x += 2;
                     }
                 else
@@ -100,7 +102,6 @@ namespace HIV_MLMv1
                     }
                     else
                     {
-                        //Console.WriteLine(virusB);
                         x += 2;
                     }
                 }
@@ -141,10 +142,32 @@ namespace HIV_MLMv1
 
 
                        target = IntBetas[i / 2]; // Saving the beta of the originally mutated strain.
-                        if (rGen.NextBoolean())  // Determine whether the next bin or previous bin should be mutated to
-                            target++;
-                        else
-                            target--;
+                            double whatjump = rGen.NextDouble();
+                            if (rGen.NextBoolean())  // Determine whether the next bin or previous bin should be mutated to
+                            {
+                                foreach(double pos in MutDistribution)
+                                {
+                                    if (pos == MutDistribution[MutDistribution.Count - 1])
+                                    { target = rGen.Next(0, 45); break; }
+
+                                    target++;
+                                    if (pos > whatjump)
+                                        break;
+                                    whatjump -= pos;
+                                }
+                            }
+                            else
+                            {
+                                foreach (double pos in MutDistribution)
+                                {
+                                    if (pos == MutDistribution[MutDistribution.Count - 1])
+                                    { target = rGen.Next(0, 45); break; }
+                                    target--;
+                                    if (pos > whatjump)
+                                        break;
+                                    whatjump -= pos;
+                                }
+                            }
                         if (target < 0) target = 0;
                             // See if this bin already exists in the list
 
