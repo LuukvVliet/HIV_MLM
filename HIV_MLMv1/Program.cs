@@ -31,7 +31,7 @@ namespace HIV_MLMv1
         public static Solver SolveSim = new Solver();
         public static StepperTypeCode UsedStepFunction = StepperTypeCode.RungeKutta4; // ODE step solver function type
 
-        static void Main(string[] args)
+        static void Main1(string[] args)
         {
             //Read the outputdirectory
             string DirOut = "C:\\Users\\lukxi\\source\\repos\\HIV_MLMv1\\ToBeIgnored\\TestRunSim";
@@ -49,7 +49,7 @@ namespace HIV_MLMv1
                 // Deaths by chance
                 // Average lifespan up till now
 
-                for (int b = -2; b < 50; b++)
+                for (int b = -2; b < 70; b++)
                     betasVector.Add(0.000004 * Math.Pow(1.03, b));
 
                 for (int i = 0; i < N; i++)

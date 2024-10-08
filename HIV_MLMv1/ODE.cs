@@ -18,6 +18,8 @@ namespace HIV_MLMv1
         const int sourceBase = 20000;
         public double FractieLatent = 0.04;
         public double FractieActivatie = 0.05;
+        public double AttackRate = 1.1;
+        public double ImmuneRecog = 10000;
         public ODE(int type, List<double> betas)
         {
             betasVector = betas;
@@ -110,9 +112,9 @@ namespace HIV_MLMv1
                             const double d1 = sourceBase/KT;
                             const double deltaI = 0.5;
                             const double k = 1;
-                            const double a = 1.1;
+                            double a = AttackRate;
                             const double deltaE = 0.1;
-                            const double hE = 10000;
+                            double hE = ImmuneRecog;
                             const double eE = 1;
                             const double eI = 1/KT;
                             double fraqL = FractieLatent;
