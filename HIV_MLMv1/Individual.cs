@@ -36,7 +36,7 @@ namespace HIV_MLMv1
             VirusState = Init.Skip(2).ToList();
             StateHistory = new List<List<double>>();
             BetasHistory = new List<List<int>>();
-            MutDistribution = new List<double> {0.8, 0.15, 0.03, 0.015, 0.004, 0.00099, 0.00001};
+            MutDistribution = new List<double> {0.8, 0.15, 0.03, 0.015, 0.004, 0.001, 0};
         }
         
 
@@ -57,6 +57,10 @@ namespace HIV_MLMv1
             StateHistory.Add(LS.ToList());
             BetasHistory.Add(IntBetas);
             /* */
+            if(LS.Count <3)
+            {
+                return true;
+            }
             if (LS[0] <= tcellCutoff)
             {
                 DeathTimer++;

@@ -33,14 +33,14 @@ namespace HIV_MLMv1
             SolveTest.StepperCode = StepperTypeCode.RungeKutta4;
 
             StringBuilder metaFile = new StringBuilder();
-            for (double xAxis = 0.75; xAxis <= 1.25; xAxis += 0.01)
+            for (double xAxis = 0.01; xAxis <= 0.5; xAxis += 0.01)
             {
                 xAxis = Math.Round(xAxis, 2);
-                string DirOut = "C:\\Users\\lukxi\\source\\repos\\HIV_MLMv1\\ToBeIgnored\\ParamSweep_Individual\\a+hE\\";
+                string DirOut = "C:\\Users\\lukxi\\source\\repos\\HIV_MLMv1\\ToBeIgnored\\ParamSweep_Individual\\fraqL+activL+2\\";
                 DirOut += xAxis + "\\";
                 Directory.CreateDirectory(DirOut);
                 Console.WriteLine(xAxis);
-                for (double yAxis = 7500; yAxis <= 12500; yAxis += 100)
+                for (double yAxis = 0.01; yAxis <= 0.5; yAxis += 0.01)
                 {
                     yAxis = Math.Round(yAxis, 2);
 
@@ -53,8 +53,8 @@ namespace HIV_MLMv1
                         int t = 0;
                         Random x = new Random();
                         ODE testODE = new ODE(3, betasList);
-                        testODE.AttackRate = xAxis;
-                        testODE.ImmuneRecog = yAxis;
+                        testODE.FractieLatent = xAxis;
+                        testODE.FractieActivatie = yAxis;
 
                         List<int> VirusBetas = new List<int> {
                         startbeta
@@ -81,25 +81,48 @@ namespace HIV_MLMv1
                             if (true)
                             {
 
-                                trials.Add(new List<double>()); trials.Add(new List<double>()); trials.Add(new List<double>()); //Adding the first 3 columns
+                                trials.Add(new List<double>()); trials.Add(new List<double>()); trials.Add(new List<double>()); trials.Add(new List<double>()); //Adding the first 4 columns
                                 foreach (double b in betasList)  //Adding the other columns
                                 {
                                     List<double> vlist = new List<double>();
                                     vlist.AddRange(Enumerable.Repeat(0.0, t));
                                     trials.Add(vlist);
+
+                                    List<double> llist = new List<double>();
+                                    llist.AddRange(Enumerable.Repeat(0.0, t));
+                                    trials.Add(llist);
                                 }
                                 for (int timepoint = 0; timepoint < t; timepoint++)
                                 {
                                     trials[0].Add(test.StateHistory[timepoint][0]);
                                     trials[1].Add(test.StateHistory[timepoint][1]);
-                                    trials[2].Add(test.StateHistory[timepoint].Skip(2).Where((k, i) => i % 2 == 0).Sum());
+
+                                    int odd = 0;
+                                    double a = 0;
+                                    double b = 0;
+                                    //This foreach loop calculates the total viral load and latent load for one timepoint
+                                    foreach(double xxx in test.StateHistory[timepoint].Skip(2))
+                                    {
+
+                                        if(odd%2==0)
+                                            a += xxx;
+                                        else
+                                            b += xxx;
+                                        odd++;
+                                    }
+                                    trials[2].Add(a);
+                                    trials[3].Add(b);
+
+                                    //trials[2].Add(test.StateHistory[timepoint].Skip(2).Where((k, i) => i % 2 == 0).Sum());
+                                    //trials[3].Add(test.StateHistory[timepoint].Skip(2).Where((k, i) => i % 2 == 1).Sum());
                                     for (int virusstrain = 0; virusstrain < test.BetasHistory[timepoint].Count; virusstrain++)
                                     {
-                                        int xLoc = test.BetasHistory[timepoint][virusstrain] + 3;
+                                        int xLoc = (test.BetasHistory[timepoint][virusstrain]*2) + 4;
                                         trials[xLoc][timepoint] = test.StateHistory[timepoint][2 + 2 * virusstrain];
+                                        trials[xLoc+1][timepoint] = test.StateHistory[timepoint][3 + 2 * virusstrain];
                                     }
                                 }
-
+                                int vuv = 399393;
 
                                 //Add metadata onto files
                                 fs.WriteLine("#Threshold: 10^5, FraqLatent: " + xAxis.ToString() + "FraqLatent: " + yAxis.ToString()+  ", mr: " + mr.ToString());
@@ -107,11 +130,13 @@ namespace HIV_MLMv1
 
                                 //Add columnnames
                                 StringBuilder build = new StringBuilder();
-                                build.Append("time T E I_tot");
+                                build.Append("time T E I_tot L_tot");
                                 for (int col = 0; col < betasList.Count; col++)
                                 {
                                     build.Append(' ');
-                                    build.Append("I_" + (betasList[col]).ToString());
+                                    build.Append("I_" + Math.Round(betasList[col], 8).ToString());
+                                    build.Append(' ');
+                                    build.Append("L_" + Math.Round(betasList[col], 8).ToString());
                                 }
                                 fs.WriteLine(build);
                                 fs.Flush();
@@ -135,9 +160,6 @@ namespace HIV_MLMv1
                             }
                         }
                     }
-
-
-
                 }
             }
             /* 
