@@ -26,25 +26,25 @@ namespace HIV_MLMv1
                 betasList.Add(0.000004 * Math.Pow(1.03, counters));
             
             
-            int timelimit = 50000;
+            int timelimit = 500000;
 
             Solver SolveTest = new Solver();
 
             SolveTest.StepperCode = StepperTypeCode.RungeKutta4;
 
             StringBuilder metaFile = new StringBuilder();
-            for (double xAxis = 0.01; xAxis <= 0.5; xAxis += 0.01)
+            for (double xAxis = 0.75; xAxis <= 1.25; xAxis += 0.01)
             {
                 xAxis = Math.Round(xAxis, 2);
-                string DirOut = "C:\\Users\\lukxi\\source\\repos\\HIV_MLMv1\\ToBeIgnored\\ParamSweep_Individual\\fraqL+activL+2\\";
+                string DirOut = "C:\\Users\\lukxi\\source\\repos\\HIV_MLMv1\\ToBeIgnored\\ParamSweep_Individual\\a+hE\\";
                 DirOut += xAxis + "\\";
                 Directory.CreateDirectory(DirOut);
                 Console.WriteLine(xAxis);
-                for (double yAxis = 0.01; yAxis <= 0.5; yAxis += 0.01)
+                for (double yAxis = 7500; yAxis <= 12500; yAxis += 100)
                 {
                     yAxis = Math.Round(yAxis, 2);
 
-                    for (int testrun = 1; testrun < 2; testrun++)
+                    for (int testrun = 0; testrun < 1; testrun++)
                     {
                         List<List<double>> trials = new List<List<double>>();
                         List<double> seenbetas = new List<double>();
@@ -53,8 +53,8 @@ namespace HIV_MLMv1
                         int t = 0;
                         Random x = new Random();
                         ODE testODE = new ODE(3, betasList);
-                        testODE.FractieLatent = xAxis;
-                        testODE.FractieActivatie = yAxis;
+                        testODE.AttackRate = xAxis;
+                        testODE.ImmuneRecog = yAxis;
 
                         List<int> VirusBetas = new List<int> {
                         startbeta

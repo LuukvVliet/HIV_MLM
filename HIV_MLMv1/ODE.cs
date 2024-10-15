@@ -30,67 +30,126 @@ namespace HIV_MLMv1
                     VirusDynamics = new LambdaOde
                     {
 
-                        OdeObserver = (x, t) => 
-                        { 
-                           // History.Add(x); IntHist.Add(new List<double> { x[0], x[1], x[2] }); 
+                        OdeObserver = (x, t) =>
+                        {
                         },
                         OdeSystem = (x, dxdt, t) =>
                         {
 
                             //Parameters currently taken from own R script (death rate from paper, replication too i believe. h1 determined)
                             //Paper supplied by rob has no (apparently) usefull parameters (UNTRUE).
+                            double source = 1000;
+                            const double K = 1088240;
                             const double r = 0.111;
                             const double d1 = 0.01;
-                            const double delta = 0.5;
-                            const double h1 = 1.09901 * 1000000;
-                            const double a = 1.1;
-                            const double d2 = 0.1;
-                            const double h2 = 10000;
-                            double sum = 0;
-                            double PerCapitaDeathToTCells = 0;
+                            const double deltaI = 0.5;
+                            const double k = 1;
+                            double a = AttackRate;
+                            const double deltaE = 0.1;
+                            double hE = ImmuneRecog;
+                            const double eE = 1;
+                            const double eI = 0;
+                            double fraqL = FractieLatent;
+                            double activL = FractieActivatie;
+
+                            double effectorGrowth = 0;
+                            double thisVirusGrowth = 0;
+                            double virusLoad = 0;
+                            double latentLoad = 0;
+                            double virusxbeta = 0;
+                            for (int i = 2; i < x.Count; i += 2)
+                            {
+                                virusLoad += x[i];
+                                latentLoad += x[i + 1];
+                                virusxbeta += x[i] * betasVector[betasNumber[(i / 2 - 1)]];
+                            }
                             // T cells are dxdt[0], Effector cells are dxdt[1], rest is Virus cells.
                             //Getting virus state from virusdistribution and putting it back in virusdistribution over and over is done to prevent n^2 time problems
                             int c = 2;
                             foreach (int beta in betasNumber)
                             {
-                                sum += x[c];
-                                double netGrowth = betasVector[beta] * x[0] * x[c];
-                                virusGrowth += netGrowth;
 
-                                PerCapitaDeathToTCells += beta * x[c];
-                                dxdt[c] = netGrowth - delta * x[1] * x[c];
-                                c++;
+                                double netGrowth = betasVector[beta] * x[0] * x[c] / (1 + eI * x[0] + eI * virusLoad);
+                                double netEffectorDeath = x[1] * x[c] / (hE + eE * x[1] + eE * virusLoad);
+                                effectorGrowth += a * netEffectorDeath;
+                                thisVirusGrowth += netGrowth;
+
+
+                                dxdt[c] = (1 - fraqL) * netGrowth + activL * x[c + 1] - deltaI * x[c] - k * netEffectorDeath;
+                                dxdt[c + 1] = fraqL * netGrowth +r*x[c+1] -x[c+1]*(x[0] + latentLoad) / K - d1 * x[c + 1] - activL * x[c + 1];
+                                c += 2;
                             }
 
-                            dxdt[0] = r * x[0] - d1 * x[0] - r*x[0]*(x[0] + sum) / h1 - x[0] * PerCapitaDeathToTCells; // T cells
-                            dxdt[1] = (a * x[1] * sum) / (h2 + x[1] + sum) - d2 * x[1];  // Effector cells
+                            dxdt[0] = source + r * x[0] - d1 * x[0] - x[0] * (x[0] + latentLoad) / K - thisVirusGrowth; // T cells
+                            dxdt[1] = effectorGrowth - deltaE * x[1];  // Effector cells
+
+                            virusGrowth += thisVirusGrowth;
                         }
                     };
                     break;
+                    break;
+
+                    //Model containing lower levels of source, with a proper replication rate
+                    //Also adds the 'latent load' for density dependence.
+                    //MAYBE add the replication rate to the latent cell population aswell, although this does have some problems
                 case 2:
-                    VirusDynamics = new LambdaOde
+                    VirusDynamics = new LambdaOde 
                     {
 
                         OdeObserver = (x, t) =>
                         {
-                            // History.Add(x); IntHist.Add(new List<double> { x[0], x[1], x[2] }); 
                         },
                         OdeSystem = (x, dxdt, t) =>
                         {
 
                             //Parameters currently taken from own R script (death rate from paper, replication too i believe. h1 determined)
-
+                            //Paper supplied by rob has no (apparently) usefull parameters (UNTRUE).
+                            double source = 1000;
+                            const double K = 1088240;
                             const double r = 0.111;
                             const double d1 = 0.01;
-                            const double delta = 0.5;
-                            const double h1 = 1.09901 * 1000000;
-                            const double a = 1.1;
-                            const double d2 = 0.1;
-                            const double h2 = 10000;
-                            //   r * x[0] - d1 * x[0] - r * x[0] * (x[0] + x[2]) / h1 - VirusBetas[0] * x[0] * x[2]; // T cells
-                            dxdt[0] = x[0] * (r - r * (x[0] + x[2]) / h1 - d1 - betasNumber[0] * x[2]);
-                            dxdt[2] = betasNumber[0] * x[0] * x[2] - delta * x[1] * x[2]; // Infected cells
-                            dxdt[1] = (a * x[1] * x[2]) / (h2 + x[1] + x[2]) - d2 * x[1];  // Effector cells
+                            const double deltaI = 0.5;
+                            const double k = 1;
+                            double a = AttackRate;
+                            const double deltaE = 0.1;
+                            double hE = ImmuneRecog;
+                            const double eE = 1;
+                            const double eI = 0;
+                            double fraqL = FractieLatent;
+                            double activL = FractieActivatie;
+
+                            double effectorGrowth = 0;
+                            double thisVirusGrowth = 0;
+                            double virusLoad = 0;
+                            double latentLoad = 0;
+                            double virusxbeta = 0;
+                            for (int i = 2; i < x.Count; i += 2)
+                            {
+                                virusLoad += x[i];
+                                latentLoad += x[i + 1];
+                                virusxbeta += x[i] * betasVector[betasNumber[(i / 2 - 1)]];
+                            }
+                            // T cells are dxdt[0], Effector cells are dxdt[1], rest is Virus cells.
+                            //Getting virus state from virusdistribution and putting it back in virusdistribution over and over is done to prevent n^2 time problems
+                            int c = 2;
+                            foreach (int beta in betasNumber)
+                            {
+
+                                double netGrowth = betasVector[beta] * x[0] * x[c] / (1 + eI * x[0] + eI * virusLoad);
+                                double netEffectorDeath = x[1] * x[c] / (hE + eE * x[1] + eE * virusLoad);
+                                effectorGrowth += a * netEffectorDeath;
+                                thisVirusGrowth += netGrowth;
+
+
+                                dxdt[c] = (1 - fraqL) * netGrowth + activL * x[c + 1] - deltaI * x[c] - k * netEffectorDeath;
+                                dxdt[c + 1] = fraqL * netGrowth - d1 * x[c + 1] - activL * x[c + 1];
+                                c += 2;
+                            }
+
+                            dxdt[0] = source + r * x[0] - d1 * x[0]-x[0]*(x[0]+latentLoad)/K - thisVirusGrowth; // T cells
+                            dxdt[1] = effectorGrowth - deltaE * x[1];  // Effector cells
+
+                            virusGrowth += thisVirusGrowth;
                         }
                     };
                     break;
