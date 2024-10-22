@@ -33,14 +33,14 @@ namespace HIV_MLMv1
             SolveTest.StepperCode = StepperTypeCode.RungeKutta4;
 
             StringBuilder metaFile = new StringBuilder();
-            for (double xAxis = 0.75; xAxis <= 1.25; xAxis += 0.01)
+            for (double xAxis = 1; xAxis <= 1; xAxis += 0.01)
             {
                 xAxis = Math.Round(xAxis, 2);
-                string DirOut = "C:\\Users\\lukxi\\source\\repos\\HIV_MLMv1\\ToBeIgnored\\ParamSweep_Individual\\a+hE\\";
-                DirOut += xAxis + "\\";
+                string DirOut = "C:\\Users\\lukxi\\source\\repos\\HIV_MLMv1\\ToBeIgnored\\ReplicationRate_Individual\\";
+                DirOut += "NoLatentNoSat" + "\\";
                 Directory.CreateDirectory(DirOut);
                 Console.WriteLine(xAxis);
-                for (double yAxis = 7500; yAxis <= 12500; yAxis += 100)
+                for (double yAxis = 500; yAxis <= 10000; yAxis += 500)
                 {
                     yAxis = Math.Round(yAxis, 2);
 
@@ -52,9 +52,10 @@ namespace HIV_MLMv1
 
                         int t = 0;
                         Random x = new Random();
-                        ODE testODE = new ODE(3, betasList);
-                        testODE.AttackRate = xAxis;
-                        testODE.ImmuneRecog = yAxis;
+                        ODE testODE = new ODE(4, betasList);
+                        testODE.sourceBase = (int)yAxis;
+                        // testODE.AttackRate = xAxis;
+                        // testODE.ImmuneRecog = yAxis;
 
                         List<int> VirusBetas = new List<int> {
                         startbeta
@@ -125,7 +126,7 @@ namespace HIV_MLMv1
                                 int vuv = 399393;
 
                                 //Add metadata onto files
-                                fs.WriteLine("#Threshold: 10^5, FraqLatent: " + xAxis.ToString() + "FraqLatent: " + yAxis.ToString()+  ", mr: " + mr.ToString());
+                                fs.WriteLine("#Source: "+ yAxis.ToString() + "mr: " + mr.ToString());
                                 fs.Flush();
 
                                 //Add columnnames
