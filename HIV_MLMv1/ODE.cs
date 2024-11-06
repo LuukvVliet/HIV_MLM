@@ -37,8 +37,6 @@ namespace HIV_MLMv1
                         OdeSystem = (x, dxdt, t) =>
                         {
 
-                            //Parameters currently taken from own R script (death rate from paper, replication too i believe. h1 determined)
-                            //Paper supplied by rob has no (apparently) usefull parameters (UNTRUE).
                             double source = sourceBase;
                             const double K = 1088240;
                             const double r = 0.111;
@@ -88,7 +86,7 @@ namespace HIV_MLMv1
                     };  
                     break;
 
-                    //Model containing lower levels of source, with a proper replication rate
+                    //Model containing lower levels of source, with a proper replication rate (Replication set to 0.2 for proper 'hill' effect)
                     //Also adds the 'latent load' for density dependence.
                     //MAYBE add the replication rate to the latent cell population aswell, although this does have some problems
                 case 2:
@@ -101,11 +99,9 @@ namespace HIV_MLMv1
                         OdeSystem = (x, dxdt, t) =>
                         {
 
-                            //Parameters currently taken from own R script (death rate from paper, replication too i believe. h1 determined)
-                            //Paper supplied by rob has no (apparently) usefull parameters (UNTRUE).
                             double source = sourceBase;
                             const double K = 1088240;
-                            const double r = 0.111;
+                            const double r = 0.2;
                             const double d1 = 0.01;
                             const double deltaI = 0.5;
                             double a = AttackRate;
@@ -225,7 +221,7 @@ namespace HIV_MLMv1
                             //Paper supplied by rob has no (apparently) usefull parameters (UNTRUE).
                             double source = sourceBase;
                             const double K = 1088240;
-                            const double r = 0.111;
+                            const double r = 0.2;
                             const double d1 = 0.01;
                             const double deltaI = 0.5;
                             double a = AttackRate;
@@ -253,7 +249,7 @@ namespace HIV_MLMv1
                             {
 
                                 double netGrowth = betasVector[beta] * x[0] * x[c];
-                                double netEffectorDeath = x[1] * x[c];
+                                double netEffectorDeath = x[1] * x[c] ;
                                 effectorGrowth += netEffectorDeath / (hE + eE * x[1] + eE * virusLoad);
                                 thisVirusGrowth += netGrowth;
 

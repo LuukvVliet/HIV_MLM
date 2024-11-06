@@ -15,14 +15,14 @@ namespace HIV_MLMv1
         //Each other value is either the lowest point of the viral load, -1 if the virus went extinct due to oscillatory behaviour 
         //and -2 if the individual went extinct.
 
-        static void Main(string[] args)
+        static void Main1(string[] args)
         {
 
             List<double> betasList = new List<double>();
             const int startbeta = 2;
             const double mr = 0.000005;
 
-            for(int counters = -2; counters <78; counters++)
+            for(int counters = -2; counters <118; counters++)
                 betasList.Add(0.000004 * Math.Pow(1.03, counters));
             
             
