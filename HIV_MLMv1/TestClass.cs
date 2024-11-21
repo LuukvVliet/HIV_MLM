@@ -15,18 +15,18 @@ namespace HIV_MLMv1
         //Each other value is either the lowest point of the viral load, -1 if the virus went extinct due to oscillatory behaviour 
         //and -2 if the individual went extinct.
 
-        static void Main1(string[] args)
+        static void Main(string[] args)
         {
 
             List<double> betasList = new List<double>();
-            const int startbeta = 2;
-            const double mr = 0.000005;
+            
+            const double mr = 0.000001;
 
-            for(int counters = -2; counters <118; counters++)
-                betasList.Add(0.000004 * Math.Pow(1.03, counters));
-            
-            
-            int timelimit = 500000;
+            for(int counters = -2; counters <98; counters++)
+                betasList.Add(0.000002 + 0.0000005 *counters);
+
+
+            int timelimit = 200;
 
             Solver SolveTest = new Solver();
 
@@ -37,12 +37,17 @@ namespace HIV_MLMv1
             {
                 xAxis = Math.Round(xAxis, 2);
                 string DirOut = "C:\\Users\\lukxi\\source\\repos\\HIV_MLMv1\\ToBeIgnored\\ReplicationRate_Individual\\";
-                DirOut += "NoLatentNoSat" + "\\";
+                DirOut += "Surviving" + "\\";
                 Directory.CreateDirectory(DirOut);
-                Console.WriteLine(xAxis);
-                for (double yAxis = 500; yAxis <= 10000; yAxis += 500)
+                //Console.WriteLine(xAxis);
+                using (StreamWriter fs = new StreamWriter(DirOut + "betasweep.txt"))
                 {
-                    yAxis = Math.Round(yAxis, 2);
+                    fs.WriteLine("#mr: " + mr + " timelimit: "+ timelimit);
+                    fs.Flush();
+                    for (int yAxis = 0; yAxis <= 99; yAxis += 1)
+                    {
+                    int startbeta = yAxis;
+                    //yAxis = Math.Round(yAxis, 2);
 
                     for (int testrun = 0; testrun < 1; testrun++)
                     {
@@ -52,18 +57,17 @@ namespace HIV_MLMv1
 
                         int t = 0;
                         Random x = new Random();
-                        ODE testODE = new ODE(4, betasList);
-                        testODE.sourceBase = (int)yAxis;
+                        ODE testODE = new ODE(2, betasList);
+                        testODE.sourceBase = 5000;
                         // testODE.AttackRate = xAxis;
                         // testODE.ImmuneRecog = yAxis;
 
                         List<int> VirusBetas = new List<int> {
                         startbeta
-                 };
+                        };
                         StateType StartingInfected = new StateType { 1000000, 1, 25, 0 };
                         Individual test = new Individual(0, -1, StartingInfected, VirusBetas);
-                        using (StreamWriter fs = new StreamWriter(DirOut +yAxis+"_"+ testrun + ".txt"))
-                        {
+                        
                             while (t < timelimit)
                             {
 
@@ -72,7 +76,7 @@ namespace HIV_MLMv1
                                 test.InternalState = testODE.VirusDynamics.InitialConditions;                           //Retrieve the now solved internals
 
                                 //Triggers if individual goes extinct
-                                if (test.ComputedOnce(100000, mr, x, 25, testODE.GetVirusGrowth()))
+                                if (test.ComputedOnce(50000, mr, x, 25, testODE.GetVirusGrowth()))
                                 {
 
                                     break;
@@ -80,6 +84,18 @@ namespace HIV_MLMv1
                                 t++;
                             }
                             if (true)
+                            {
+                                double xx = 0;
+                                for (int virusstrain = 0; virusstrain < test.BetasHistory[test.StateHistory.Count-1].Count; virusstrain++)
+                                {
+                                    xx += test.StateHistory[test.StateHistory.Count - 1][2 + 2 * virusstrain];
+                                }
+                                fs.WriteLine(betasList[yAxis] + " " + test.StateHistory[test.StateHistory.Count-1][0] + " " + xx + " " + test.expectedMutations[0] +" "+ test.expectedMutations[1]);
+                                fs.Flush();
+                                
+                            }
+
+                            if (false)
                             {
 
                                 trials.Add(new List<double>()); trials.Add(new List<double>()); trials.Add(new List<double>()); trials.Add(new List<double>()); //Adding the first 4 columns
@@ -123,8 +139,6 @@ namespace HIV_MLMv1
                                         trials[xLoc+1][timepoint] = test.StateHistory[timepoint][3 + 2 * virusstrain];
                                     }
                                 }
-                                int vuv = 399393;
-
                                 //Add metadata onto files
                                 fs.WriteLine("#Source: "+ yAxis.ToString() + "mr: " + mr.ToString());
                                 fs.Flush();

@@ -27,6 +27,8 @@ namespace HIV_MLMv1
         public List<List<double>> StateHistory { get; set; }
         public List<List<int>> BetasHistory { get; set; }
 
+        public List<double> expectedMutations { get; set; }
+
         public Individual(int tiem, int id, StateType Init, List<int> VB) 
         {
             ID = id;
@@ -36,7 +38,8 @@ namespace HIV_MLMv1
             VirusState = Init.Skip(2).ToList();
             StateHistory = new List<List<double>>();
             BetasHistory = new List<List<int>>();
-            MutDistribution = new List<double> {0.8, 0.15, 0.03, 0.015, 0.004, 0.001, 0};
+            MutDistribution = new List<double> {0.8, 0.15, 0.024, 0.02, 0.004, 0.001, 0.001};
+            expectedMutations = new List<double> { 0.0, 0.0 };
         }
         
 
@@ -118,12 +121,14 @@ namespace HIV_MLMv1
 
             //Mutations according to the deterministic average:
             double expectedMut = mr * sumV;
+            expectedMutations[0] = expectedMut;
+            expectedMutations[1] += expectedMut;
             if (expectedMut > 1)
                 mutations = (int)Math.Round(expectedMut);
             else if (rGen.NextDouble() < expectedMut)
                 mutations = 1;
-            
 
+            mutations = 0;
             this.VirusState = LS.Skip(2).ToList();
             if (IntBetas.Count < VirusLimit)
             {
@@ -152,7 +157,7 @@ namespace HIV_MLMv1
                                 foreach(double pos in MutDistribution)
                                 {
                                     if (pos == MutDistribution[MutDistribution.Count - 1])
-                                    { target = rGen.Next(0, 45); break; }
+                                    { target = rGen.Next(0, 35); break; }
 
                                     target++;
                                     if (pos > whatjump)
@@ -165,7 +170,7 @@ namespace HIV_MLMv1
                                 foreach (double pos in MutDistribution)
                                 {
                                     if (pos == MutDistribution[MutDistribution.Count - 1])
-                                    { target = rGen.Next(0, 45); break; }
+                                    { target = rGen.Next(0, 35); break; }
                                     target--;
                                     if (pos > whatjump)
                                         break;
@@ -212,23 +217,6 @@ namespace HIV_MLMv1
             
 
             return false;
-        }
-        public double NewInfection(Random rGen)
-        {
-            double result = 0;
-            double sum = InternalState.Skip(2).Sum();
-            double targetmutation = rGen.Next(0, (int)sum);
-            for (int i = 0; i < VirusState.Count; i++)
-            {
-                if (VirusState[i] <= targetmutation)
-                    targetmutation -= VirusState[i];
-                else
-                {
-                    result = IntBetas[i];
-                    break;
-                }
-            }
-            return result;
         }
     }
 }
