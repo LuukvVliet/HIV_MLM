@@ -17,7 +17,7 @@ namespace HIV_MLMv1
         public static List<double> betasVector = new List<double>();
 
         public static double DeathProbability = 0.00002;          //Base Deathrate of Individuals
-        public static double MutationProbability = 0.0000002;    //Mutation chance of virus; should be scaled to amount of virus
+        public static double MutationProbability = 0.00000001;    //Mutation chance of virus; should be scaled to amount of virus
 
         public static double TCellCutoff = 20000;             //At what threshold does an individual not have enough T cells to live anymore?
         public static int N = 20;                          //Starting amount of infected individuals.
@@ -29,11 +29,11 @@ namespace HIV_MLMv1
 
         //Recommended to leave these parameters be.
         public static int time = 0;
-        public static int timeLimit = 200000; 
+        public static int timeLimit = 400000; 
         public static Solver SolveSim = new Solver();
         public static StepperTypeCode UsedStepFunction = StepperTypeCode.RungeKutta4; // ODE step solver function type
 
-        static void Main1(string[] args)
+        static void Main(string[] args)
         {
             //Read the outputdirectory
             string DirOut = "C:\\Users\\lukxi\\source\\repos\\HIV_MLMv1\\ToBeIgnored\\TestRunSim_hill";
@@ -75,7 +75,7 @@ namespace HIV_MLMv1
                 SolveSim.StepperCode = UsedStepFunction;
                 using (StreamWriter fs = new StreamWriter(DirOut + "\\replicate_" + trials + ".txt"))
                 {
-                    using (StreamWriter snd = new StreamWriter(DirOut + "\\beta_hill_Vrev_" + trials + ".txt"))
+                    using (StreamWriter snd = new StreamWriter(DirOut + "\\beta_hill_Vrev_3" + trials + ".txt"))
                     {
                         fs.WriteLine("#HEADER: FraqLatent: " + Sim.FractieLatent + " Activatie: " + Sim.FractieActivatie + " mr: " + MutationProbability + " ");
                         fs.WriteLine("Time PopulationCount AvgAmountOfBetas AvgBeta TotalDeath EvoDeath AverageLifetime");
@@ -87,10 +87,15 @@ namespace HIV_MLMv1
                             //Virusloads is the list containing every individual's viral load.
                             List<double> VirusLoads = new List<double>();
                             List<Individual> NextPopulation = new List<Individual> { };
+
+                            if (time == 200000)
+                            {
+                                NextPopulation.Add(new Individual(time, -9, new StateType { 1000000, 1, 25, 0 }, new List<int> { 5 }));
+                            }
+
                             foreach (Individual host in Population)
                             {
                                 Sim.SetInit(host.InternalState, host.IntBetas);         //Set the internals for the ODE
-                                                                                  //Console.WriteLine(x.InternalState.Count);
 
                                 SolveSim.Solve(Sim.VirusDynamics, 0, 0.05, 1, IntegrateFunctionTypeCode.Adaptive); //Solve the ODE system for one timestep
                                 host.InternalState = Sim.VirusDynamics.InitialConditions; //Set the individual to the new internal state.
@@ -114,7 +119,7 @@ namespace HIV_MLMv1
 
                             }
 
-
+                            
 
                             int totalVirusLoad = (int)VirusLoads.Sum();
                             double NewInfections = 0;
@@ -232,6 +237,11 @@ namespace HIV_MLMv1
                         
                         time++;
                         Population = NextPopulation;
+                            
+                            if(time > 100000)
+                            {
+
+                            }
                         }
                     int FINISH = 0;
                     }
@@ -254,9 +264,7 @@ namespace HIV_MLMv1
         {
             double result;
 
-            if (V < 28000)
-                V = 0;
-            result = virMax * V / (30000 + V);
+            result = virMax * Math.Pow(V, 0.8) / (15000 + Math.Pow(V, 0.8));
             result = 1 - Math.Pow(1 - result, 0.0027397260274);
 
             return result;

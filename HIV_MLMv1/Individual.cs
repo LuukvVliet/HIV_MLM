@@ -128,7 +128,7 @@ namespace HIV_MLMv1
             else if (rGen.NextDouble() < expectedMut)
                 mutations = 1;
 
-            mutations = 0;
+            //mutations = 0;
             this.VirusState = LS.Skip(2).ToList();
             if (IntBetas.Count < VirusLimit)
             {
