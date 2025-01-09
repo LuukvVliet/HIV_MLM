@@ -160,8 +160,7 @@ namespace HIV_MLMv1
 
                             //Parameters currently taken from own R script (death rate from paper, replication too i believe. h1 determined)
                             //Paper supplied by rob has no (apparently) usefull parameters (UNTRUE).
-                            double source = sourceBase;
-                            const double K = 1088240;
+                            double source = 10000;
                             const double r = 0;
                             const double d1 = 0.01;
                             const double deltaI = 0.5;

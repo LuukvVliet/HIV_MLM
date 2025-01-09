@@ -17,8 +17,8 @@ namespace HIV_MLMv1
 
         static void Main1(string[] args)
         {
-
-            List<double> betasList = new List<double>();
+             List<double> MutDistribution = new List<double> { 0.8, 0.1, 0.024, 0.016, 0.055 };
+             List<double> betasList = new List<double>();
             
             const double mr = 0.000001;
 
@@ -66,7 +66,7 @@ namespace HIV_MLMv1
                         startbeta
                         };
                         StateType StartingInfected = new StateType { 1000000, 1, 25, 0 };
-                        Individual test = new Individual(0, -1, StartingInfected, VirusBetas);
+                        Individual test = new Individual(0, -1, StartingInfected, VirusBetas, MutDistribution);
                         
                             while (t < timelimit)
                             {

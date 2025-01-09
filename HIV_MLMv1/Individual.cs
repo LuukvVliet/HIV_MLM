@@ -12,14 +12,14 @@ namespace HIV_MLMv1
 {
     class Individual
 
-        // POSSIBLE OPTIMIZATIONS:
-        // VECTOR MULTIPLICATION INSTEAD OF LOOPING OVER LIST
-        // Aantal mutaties schaalt met de TOEVOER van virus, niet het totaal aantal virus
     {
         
         public int ID { get; set; }
         public int externalTime { get; set; }
         public int DeathTimer { get; set; }
+        public double AttackRate = 0.5;
+        public int MutationTimer = 50;
+        public int lastVirusGrowth = 0;
         public List<double> MutDistribution { get; set; }
         public StateType InternalState { get; set; }
         public List<double> VirusState { get; set; }
@@ -29,7 +29,7 @@ namespace HIV_MLMv1
 
         public List<double> expectedMutations { get; set; }
 
-        public Individual(int tiem, int id, StateType Init, List<int> VB) 
+        public Individual(int tiem, int id, StateType Init, List<int> VB, List<double> MD) 
         {
             ID = id;
             externalTime = tiem;
@@ -38,10 +38,23 @@ namespace HIV_MLMv1
             VirusState = Init.Skip(2).ToList();
             StateHistory = new List<List<double>>();
             BetasHistory = new List<List<int>>();
-            MutDistribution = new List<double> {0.8, 0.15, 0.024, 0.02, 0.004, 0.001, 0.001};
+            MutDistribution = MD;
             expectedMutations = new List<double> { 0.0, 0.0 };
         }
-        
+        public Individual(int tiem, int id, StateType Init, List<int> VB, List<double> MD, double AR)
+        {
+            ID = id;
+            externalTime = tiem;
+            InternalState = Init;
+            IntBetas = VB;
+            VirusState = Init.Skip(2).ToList();
+            StateHistory = new List<List<double>>();
+            BetasHistory = new List<List<int>>();
+            MutDistribution = MD;
+            expectedMutations = new List<double> { 0.0, 0.0 };
+            AttackRate = AR;
+        }
+
 
         public bool ComputedOnce(double tcellCutoff, double mr, Random rGen, double newVirusAmount, int VirusGrowth)
         {
@@ -50,16 +63,17 @@ namespace HIV_MLMv1
         public bool ComputedOnce(double tcellCutoff, double mr, Random rGen, int VirusLimit, double newVirusAmount, int VirusGrowth)
         {
             //If a viral strain has more than 10% of the virus amount with which it usually infects, go to the next population.
-            double cutoff = 0.9 * newVirusAmount;
+            double cutoff = 0.1 * newVirusAmount;
             //SumV is used to calculate probability distributions
             double sumV = 0;
             //Checks to see if the individual still has enough T cells to continue living: returns true if not.
             StateType LS = InternalState;
 
             // This piece of code keeps history of what happens in the individual; causes OutOfMemory errors by causing insane lengths of lists.
+            /*
             StateHistory.Add(LS.ToList());
             BetasHistory.Add(IntBetas);
-            /* */
+            */
             if(LS.Count <3)
             {
                 return true;
@@ -116,11 +130,14 @@ namespace HIV_MLMv1
 
 
             int mutations = 0;
+            if (VirusGrowth == 0)
+                VirusGrowth = lastVirusGrowth;
+            else
+                lastVirusGrowth = VirusGrowth;
+            
             //Mutations according to the total net growth.
-            int newSum = (int)sumV;
-
             //Mutations according to the deterministic average:
-            double expectedMut = mr * sumV;
+            double expectedMut = mr * VirusGrowth;
             expectedMutations[0] = expectedMut;
             expectedMutations[1] += expectedMut;
             if (expectedMut > 1)
@@ -133,24 +150,25 @@ namespace HIV_MLMv1
             if (IntBetas.Count < VirusLimit)
             {
                 
-                for(int trial = 0; trial < mutations; trial++) { 
-                double targetmutation = rGen.Next(0, newSum);
-                int target;
-                //This code works for the latent cell population model.
-                for (int i = 0; (i/2) < IntBetas.Count; i+=2)
-                {
-                    if (VirusState[i] <= targetmutation)
-                        targetmutation -= VirusState[i];
-                    //On else, this strain is chosen to mutate
-                    else
+                for(int trial = 0; trial < mutations; trial++) 
+                { 
+                    double targetmutation = rGen.Next(0, VirusGrowth);
+                    int target;
+                    //This code works for the latent cell population model.
+                    for (int i = 0; (i/2) < IntBetas.Count; i+=2)
                     {
-                        //Remove virus which mutates, up to 'newVirusAmount'
-                        if (newVirusAmount - VirusState[i] > 0)
-                            newVirusAmount = VirusState[i];
-                        VirusState[i] -= newVirusAmount;
+                        if (VirusState[i] <= targetmutation)
+                            targetmutation -= VirusState[i];
+                        //On else, this strain is chosen to mutate
+                        else
+                        {
+                            //Remove virus which mutates, up to 'newVirusAmount'
+                            if (newVirusAmount - VirusState[i] > 0)
+                                newVirusAmount = VirusState[i];
+                            VirusState[i] -= newVirusAmount;
 
 
-                       target = IntBetas[i / 2]; // Saving the beta of the originally mutated strain.
+                            target = IntBetas[i / 2]; // Saving the beta of the originally mutated strain.
                             double whatjump = rGen.NextDouble();
                             if (rGen.NextBoolean())  // Determine whether the next bin or previous bin should be mutated to
                             {
@@ -177,33 +195,32 @@ namespace HIV_MLMv1
                                     whatjump -= pos;
                                 }
                             }
-                        if (target < 0) target = 0;
+                            if (target < 0) target = 0;
                             // See if this bin already exists in the list
 
 
-                        bool newV = true;
-                        for (int why = 0; why < NewBetas.Count; why++)
-                        {
-                             if (NewBetas[why] == target)
+                            bool newV = true;
+                            for (int why = 0; why < NewBetas.Count; why++)
+                            {
+                                if (NewBetas[why] == target)
                                 {
                                     NewLS[why*2 + 2] += newVirusAmount;
                                     newV = false;
                                     break;
                                 }
-                        }
+                            }
 
-                        // Bin does not exist, add new bin
-                        if (newV)
+                            // Bin does not exist, add new bin
+                            if (newV)
                             {
                                 NewLS.Add(newVirusAmount);
                                 NewLS.Add(0);
                                 NewBetas.Add(target);
                             }
-                        break;
+                            break;
+                        }
                     }
-                }
-               
-                
+                    MutationTimer = 40;
                 }
             }
             //This resolves memory issues (somewhat)
@@ -213,7 +230,8 @@ namespace HIV_MLMv1
             InternalState = NewLS;
             IntBetas = NewBetas;
             VirusState = NewLS.Skip(2).ToList();
-
+            if (MutationTimer > 0)
+                MutationTimer--;
             
 
             return false;
