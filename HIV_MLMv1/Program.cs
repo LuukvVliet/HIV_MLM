@@ -10,22 +10,21 @@ namespace HIV_MLMv1
     class Program
     {
         //Simulation parameters, feel free to change
-        public static double vir50 = 13938; //Check the amount of target cells actually present in 1 ml of blood
-        //public static double vir50 = 25000;
+        public static double vir50 = 13938; 
         public static double virMax = 0.85; //0.317
         public static double virHill = 1.02;
         public static List<double> betasVector = new List<double>();
 
         public static double DeathProbability = 0.00005;          //Base Deathrate of Individuals
-        public static double MutationProbability = 0.00000003;    //Mutation chance of virus; should be scaled to amount of virus
+        public static double MutationProbability = 0.00000005;    //Mutation chance of virus; should be scaled to amount of virus
 
         public static double TCellCutoff = 20000;             //At what threshold does an individual not have enough T cells to live anymore?
         public static int N = 50;                          //Starting amount of infected individuals.
         public static double IcellStart = 25;               //Starting amount of infected cells on new mutation. SHOULD BE equal to or higher than VirusAmountOnMutate due to cutoff calculation.
 
         public static int VirusAmountOnMutate = 25;         //How many infected cells 'transfer' between two strains when one mutates?
-        public static int PopulationLimit = 100;
-        public static List<double> MutDistribution = new List<double> {0.85, 0.05, 0.03, 0.02, 0.05}; // Needs to sum to 1!
+        public static int PopulationLimit = 100;            //Maximum limit of hosts in the simulation. Hosts are replaced upon infection.
+        public static List<double> MutDistribution = new List<double> {0.85, 0.1, 0.03, 0.02, 0}; // NEEDS TO SUM TO 1!
 
         //Recommended to leave these parameters be.
         public static int time = 0;
@@ -46,6 +45,7 @@ namespace HIV_MLMv1
                                 //Initialize the population with a few infected individuals
                 List<Individual> Population = new List<Individual> { };
                 List<double> Graveyard = new List<double> { 0, 0, 0, 0, 0 };
+                List<double> notes = new List<double>();
                 // GRAVEYARD FORMAT //
                 // Deaths by T-Cell depletion
                 // Deaths by chance
@@ -55,8 +55,9 @@ namespace HIV_MLMv1
                     betasVector.Add(0.000002 * Math.Pow(1.1, b)+0.0000005*b);*/
 
                 for (int b = -2; b < 70; b++)
-                    betasVector.Add(0.000002 + 0.00000048 * 2 * b);
-
+                    betasVector.Add(0.000002 + 0.00000048 * 3 * b);
+                for (int b = 0; b < 50; b++)
+                    notes.Add(0);
 
                 //for (int b = -2; b < 40; b++)
                 //betasVector.Add(0.000004 + 0.0000015*b);
@@ -66,19 +67,19 @@ namespace HIV_MLMv1
                 {
                     StateType StartingInfected = new StateType { 1000000, 1, 25, 0 };
                     List<int> StartVBetas = new List<int>();
-                    StartVBetas.Add(35);
+                    StartVBetas.Add(3);
                     Population.Add(new Individual(time, nextID, StartingInfected, StartVBetas, MutDistribution));
                     nextID++;
                 }
                 //Create the ODE:
-                ODE Sim = new ODE(2, betasVector);
+                ODE Sim = new ODE(5, betasVector);
                 Sim.sourceBase = 5000;
                 // Simulation loop
                 Random RInt = new Random();
                 SolveSim.StepperCode = UsedStepFunction;
                 using (StreamWriter fs = new StreamWriter(DirOut + "\\replicate_" + trials + ".txt"))
                 {
-                    using (StreamWriter snd = new StreamWriter(DirOut + "\\hill+krate_opt" + trials + ".txt"))
+                    using (StreamWriter snd = new StreamWriter(DirOut + "\\sat+scale2" + trials + ".txt"))
                     {
                         fs.WriteLine("#HEADER: FraqLatent: " + Sim.FractieLatent + " Activatie: " + Sim.FractieActivatie + " mr: " + MutationProbability + " ");
                         fs.WriteLine("Time PopulationCount AvgAmountOfBetas AvgBeta TotalDeath EvoDeath AverageLifetime");
@@ -146,7 +147,6 @@ namespace HIV_MLMv1
                             
                             /*if(time == 1 || time == 26384)
                             { NewInfections = 1; }*/
-
 
                             while (NewInfections > 0)
                             {
@@ -236,7 +236,7 @@ namespace HIV_MLMv1
                                     tracker++;
                                 }
                                 //Population and Virusloads are not always equal in length
-                                double randomattack = 0.5 + RInt.NextDouble() * 0.5;
+                                double randomattack = 0.5; // + RInt.NextDouble() * 0.75;
                                 //New infections override the older infections
                                 if (NextPopulation.Count >= PopulationLimit && true)
                                 {
@@ -253,7 +253,7 @@ namespace HIV_MLMv1
                             };
 
 
-                            if (time % 365 == 0 && time != 0)
+                            if (time % 365*4 == 0 && time != 0)
                             {
 
                                 int cnt = 0; int avgBeta = 0;
@@ -275,8 +275,14 @@ namespace HIV_MLMv1
                                 double avgBeta2 = (double)avgBeta / (double)Population.Count;
                                 Console.WriteLine(avgBeta2 +" / " +averageKillingRate);
 
-
-                                fs.WriteLine(time + " " + Population.Count + " " + cnt2 + " " + avgBeta2 + " " + Graveyard[0] + " " + Graveyard[1] + " " + Graveyard[2]);
+                                StringBuilder build2 = new StringBuilder();
+                                foreach (double x in notes)
+                                { build2.Append(x); build2.Append(" "); }
+                                fs.WriteLine(build2);
+                                fs.Flush();
+                                
+                                
+                                //fs.WriteLine(time + " " + Population.Count + " " + cnt2 + " " + avgBeta2 + " " + Graveyard[0] + " " + Graveyard[1] + " " + Graveyard[2]);
 
                                 StringBuilder build = new StringBuilder();
                                 foreach (int x in betaCount)

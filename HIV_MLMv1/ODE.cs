@@ -69,7 +69,7 @@ namespace HIV_MLMv1
 
                                 double netGrowth = betasVector[beta] * x[0] * x[c] / (1 + eI * x[0] + eI * virusLoad);
                                 double netEffectorDeath = x[1] * x[c] / (hE + eE * x[1] + eE * virusLoad);
-                                effectorGrowth +=  netEffectorDeath;
+                                effectorGrowth += netEffectorDeath;
                                 thisVirusGrowth += netGrowth;
 
 
@@ -130,16 +130,15 @@ namespace HIV_MLMv1
                             {
 
                                 double netGrowth = betasVector[beta] * x[0] * x[c] / (1 + eI * x[0] + eI * virusLoad);
-                                double netEffectorDeath =  x[1] * x[c] / (hE + eE * x[1] + eE * virusLoad);
+                                double netEffectorDeath =  x[1] * x[c] ;
                                 effectorGrowth +=  netEffectorDeath;
                                 thisVirusGrowth += netGrowth;
 
-
-                                dxdt[c] = (1 - fraqL) * netGrowth + activL * x[c + 1] - deltaI * x[c] - a * netEffectorDeath;
+                                dxdt[c] = (1 - fraqL) * netGrowth + activL * x[c + 1] - deltaI * x[c] - a * netEffectorDeath / (hE + eE * x[1] + eE * virusLoad);
                                 dxdt[c + 1] = fraqL * netGrowth - d1 * x[c + 1] - activL * x[c + 1];
                                 c += 2;
                             }
-
+                            effectorGrowth /= (hE + eE * x[1] + eE * virusLoad);
                             dxdt[0] = source + r * x[0] - d1 * x[0]-x[0]*(x[0]+latentLoad)/K - thisVirusGrowth; // T cells
                             dxdt[1] = effectorGrowth - deltaE * x[1];  // Effector cells
 

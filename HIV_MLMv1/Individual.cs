@@ -69,11 +69,10 @@ namespace HIV_MLMv1
             //Checks to see if the individual still has enough T cells to continue living: returns true if not.
             StateType LS = InternalState;
 
-            // This piece of code keeps history of what happens in the individual; causes OutOfMemory errors by causing insane lengths of lists.
-            /*
+            
             StateHistory.Add(LS.ToList());
             BetasHistory.Add(IntBetas);
-            */
+            
             if(LS.Count <3)
             {
                 return true;
